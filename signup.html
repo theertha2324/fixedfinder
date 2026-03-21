@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Signup - Fixed Finder</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            padding: 20px;
+        }
+
+        input, select {
+            padding: 10px;
+            width: 250px;
+            margin: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        #map {
+            height: 300px;
+            width: 80%;
+            margin: auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Signup</h2>
+
+<form action="backend/signup.php" method="POST">
+
+    <input type="text" name="name" placeholder="Name" required><br>
+
+    <input type="text" name="phone" id="phone" placeholder="Phone" required><br>
+
+    <input type="email" name="email" placeholder="Email"><br>
+
+    <input type="password" name="password" placeholder="Password" required><br>
+
+    <!-- Role -->
+    <select name="role" id="role" onchange="showMechanicFields()" required>
+        <option value="">Select Role</option>
+        <option value="user">User</option>
+        <option value="mechanic">Mechanic</option>
+    </select><br>
+
+    <!-- Mechanic Fields -->
+    <div id="mechanicFields" style="display:none;">
+
+        <input type="text" name="garage_location" placeholder="Garage Location"><br>
+
+        <input type="text" name="specialization" placeholder="Specialization"><br>
+
+        <div id="map"></div>
+
+        <input type="hidden" name="latitude" id="lat">
+        <input type="hidden" name="longitude" id="lng">
+
+        <p>👉 Click on map to select your garage location</p>
+    </div>
+
+    <!-- OTP SECTION -->
+    <br><hr><br>
+
+    <h3>OTP Verification</h3>
+
+    <button type="button" onclick="sendOTP()">Send OTP</button><br><br>
+
+    <input type="text" name="otp" placeholder="Enter OTP" required><br><br>
+
+    <button type="submit">Signup</button>
+
+</form>
+
+<br>
+<a href="login.html">Already have account? Login</a>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<!-- OTP SCRIPT -->
+<script>
+function sendOTP(){
+    let phone = document.getElementById("phone").value;
+
+    if(phone === ""){
+        alert("Enter phone number first");
+        return;
+    }
+
+    fetch("backend/send_otp.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: "phone=" + phone
+    })
+    .then(res => res.text())
+    .then(data => {
+        alert(data);
+    });
+}
+</script>
+
+<!-- MAP SCRIPT -->
+<script>
+var map;
+var marker;
+
+function showMechanicFields(){
+    var role = document.getElementById("role").value;
+    var fields = document.getElementById("mechanicFields");
+
+    if(role === "mechanic"){
+        fields.style.display = "block";
+        setTimeout(initMap, 200);
+    } else {
+        fields.style.display = "none";
+    }
+}
+
+function initMap(){
+    if(map) return;
+
+    map = L.map('map').setView([12.9716, 77.5946], 13);
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+    }).addTo(map);
+
+    map.on('click', function(e){
+
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+
+        document.getElementById("lat").value = lat;
+        document.getElementById("lng").value = lng;
+
+        if(marker){
+            map.removeLayer(marker);
+        }
+
+        marker = L.marker([lat, lng]).addTo(map)
+            .bindPopup("Selected Location")
+            .openPopup();
+    });
+}
+</script>
+
+</body>
+</html>

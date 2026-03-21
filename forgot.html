@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Forgot Password - Fixed Finder</title>
+</head>
+
+<body>
+
+<h2>Forgot Password</h2>
+
+<input type="text" id="phone" placeholder="Enter Phone"><br><br>
+
+<button onclick="sendOTP()">Send OTP</button><br><br>
+
+<input type="text" id="otp" placeholder="Enter OTP"><br><br>
+
+<input type="password" id="newpass" placeholder="New Password"><br><br>
+
+<button onclick="resetPassword()">Reset Password</button>
+
+<script>
+let generatedOTP = "";
+
+// Send OTP
+function sendOTP(){
+    let phone = document.getElementById("phone").value;
+
+    if(phone === ""){
+        alert("Enter phone number!");
+        return;
+    }
+
+    generatedOTP = Math.floor(1000 + Math.random() * 9000);
+    alert("Your OTP is: " + generatedOTP);
+}
+
+// Reset Password
+function resetPassword(){
+    let phone = document.getElementById("phone").value;
+    let userOTP = document.getElementById("otp").value;
+    let newpass = document.getElementById("newpass").value;
+
+    if(userOTP != generatedOTP){
+        alert("Invalid OTP ❌");
+        return;
+    }
+
+    fetch("backend/reset_password.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: "phone=" + phone + "&password=" + newpass
+    })
+    .then(res => res.text())
+    .then(data => {
+        alert(data);
+        window.location.href = "login.html";
+    });
+}
+</script>
+
+</body>
+</html>
