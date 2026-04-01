@@ -12,6 +12,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="stylesheet" href="css/style.css">
     <title>Admin Dashboard</title>
 
     <style>
@@ -54,6 +55,15 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
             padding: 8px;
             cursor: pointer;
         }
+
+        .delete-btn {
+            background: red;
+            color: white;
+            padding: 6px 10px;
+            border: none;
+            cursor: pointer;
+            margin-top: 5px;
+        }
     </style>
 </head>
 
@@ -71,26 +81,60 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
         <h3>Welcome, <?php echo $_SESSION['name']; ?> 👋</h3>
     </div>
 
-    <!-- Complaints Section -->
+    <!-- 🔥 ALL COMPLAINTS -->
     <div class="card">
-        <h3>📩 Complaints</h3>
+        <h3>📩 All Complaints</h3>
 
         <?php
-        $result = $conn->query("SELECT * FROM complaints ORDER BY created_at DESC");
+        $result = $conn->query("
+        SELECT c.*, u.name 
+        FROM complaints c
+        LEFT JOIN users u ON c.user_id = u.id
+        ORDER BY c.id DESC
+        ");
 
         if($result->num_rows > 0){
             while($row = $result->fetch_assoc()){
-                echo "<p><b>Mechanic ID:</b> ".$row['mechanic_id']."</p>";
+
+                echo "<div style='border:1px solid #ccc; padding:10px; margin:10px;'>";
+
+                echo "<p><b>Name:</b> ".$row['name']."</p>";
+                echo "<p><b>Role:</b> ".$row['role']."</p>";
                 echo "<p><b>Complaint:</b> ".$row['complaint']."</p>";
 
-                if($row['image']){
-                    echo "<img src='uploads/".$row['image']."' width='150'>";
+                // ✅ FIXED IMAGE PATH
+                if(!empty($row['image'])){
+                    echo "<img src='".$row['image']."' width='150'>";
                 }
 
-                echo "<hr>";
+                echo "</div>";
             }
         } else {
             echo "<p>No complaints yet</p>";
+        }
+        ?>
+    </div>
+
+    <!-- 🔥 MANAGE USERS -->
+    <div class="card">
+        <h3>Manage Users & Mechanics</h3>
+
+        <?php
+        $result = $conn->query("SELECT * FROM users");
+
+        while($row = $result->fetch_assoc()){
+
+            echo "<div style='border:1px solid #ccc; padding:10px; margin:10px;'>";
+
+            echo "<p><b>Name:</b> ".$row['name']."</p>";
+            echo "<p><b>Role:</b> ".$row['role']."</p>";
+
+            echo "<form action='backend/delete_user.php' method='POST'>
+                    <input type='hidden' name='id' value='".$row['id']."'>
+                    <button class='delete-btn'>Delete</button>
+                  </form>";
+
+            echo "</div>";
         }
         ?>
     </div>

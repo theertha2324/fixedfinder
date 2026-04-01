@@ -2,53 +2,64 @@
 session_start();
 include 'db.php';
 
-header('Content-Type: application/json');
-
-if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'mechanic') {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+// check login
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+    echo "<script>alert('Unauthorized'); window.location='../login.html';</script>";
     exit();
 }
 
-$mechanic_id = $_SESSION['user_id'];
+$user_id = $_SESSION['user_id'];
+$role = $_SESSION['role'];   // user OR mechanic
 $complaint = $_POST['complaint'];
 
+// validation
 if (empty($complaint)) {
-    echo json_encode(['success' => false, 'message' => 'Complaint cannot be empty']);
+    echo "<script>alert('Complaint cannot be empty'); window.history.back();</script>";
     exit();
 }
 
-$image_path = null;
+$image_path = "";
 
-// Handle image upload
+// 🔥 Image Upload
 if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+
     $allowed_types = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
     $file_type = $_FILES['image']['type'];
-    
+
     if (in_array($file_type, $allowed_types)) {
-        $upload_dir = '../uploads/complaints/';
-        
-        // Create directory if it doesn't exist
+
+        $upload_dir = "../uploads/complaints/";
+
+        // create folder if not exists
         if (!file_exists($upload_dir)) {
             mkdir($upload_dir, 0777, true);
         }
-        
-        $file_extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $file_name = time() . '_' . $mechanic_id . '.' . $file_extension;
-        $upload_path = $upload_dir . $file_name;
-        
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
-            $image_path = 'uploads/complaints/' . $file_name;
+
+        $file_ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $file_name = time() . "_" . $user_id . "." . $file_ext;
+
+        $full_path = $upload_dir . $file_name;
+
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $full_path)) {
+            $image_path = "uploads/complaints/" . $file_name;
         }
     }
 }
 
-$insert_query = "INSERT INTO complaints (mechanic_id, complaint, image_path, status) VALUES (?, ?, ?, 'pending')";
-$insert_stmt = $conn->prepare($insert_query);
-$insert_stmt->bind_param("iss", $mechanic_id, $complaint, $image_path);
+// 🔥 Insert Complaint (UPDATED STRUCTURE)
+$sql = "INSERT INTO complaints (user_id, role, complaint, image)
+        VALUES ('$user_id', '$role', '$complaint', '$image_path')";
 
-if ($insert_stmt->execute()) {
-    echo json_encode(['success' => true, 'message' => 'Complaint submitted successfully']);
+if ($conn->query($sql)) {
+
+    // redirect based on role
+    if($role == "mechanic"){
+        header("Location: ../mechanic.php");
+    } else {
+        header("Location: ../home.php");
+    }
+
 } else {
-    echo json_encode(['success' => false, 'message' => 'Failed to submit complaint']);
+    echo "Error: " . $conn->error;
 }
 ?>

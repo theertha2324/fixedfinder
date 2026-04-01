@@ -1,8 +1,8 @@
 <?php
 session_start();
 
-// protect page (no direct access)
-if(!isset($_SESSION['name'])){
+// protect page
+if(!isset($_SESSION['role']) || $_SESSION['role'] != 'mechanic'){
     header("Location: login.html");
     exit();
 }
@@ -11,6 +11,7 @@ if(!isset($_SESSION['name'])){
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="stylesheet" href="css/style.css">
     <title>Mechanic Dashboard</title>
 
     <style>
@@ -50,7 +51,11 @@ if(!isset($_SESSION['name'])){
 
         .accept { background: green; color: white; }
         .reject { background: red; color: white; }
-        .toggle { background: blue; color: white; }
+
+        .toggle {
+            background: blue;
+            color: white;
+        }
 
         textarea {
             width: 100%;
@@ -83,23 +88,100 @@ if(!isset($_SESSION['name'])){
     </div>
 
     <!-- Status -->
-    
     <div class="card">
         <h3>Status</h3>
-        <button class="toggle" onclick="toggleStatus()">Go Online</button>
+        <button id="toggleBtn" class="toggle" onclick="toggleStatus()">Go Online</button>
         <p id="status">Currently Offline</p>
     </div>
 
     <!-- Requests -->
     <div class="card">
         <h3>Incoming Requests</h3>
+        <div class="card">
+    <h3>Accepted Requests</h3>
 
-        <div id="requests">
-            <p>No requests yet</p>
-        </div>
+<?php
+include "backend/db.php";
+
+$mid = $_SESSION['user_id'];
+
+$result = $conn->query("SELECT * FROM requests 
+WHERE mechanic_id='$mid' AND status='accepted'");
+
+if($result->num_rows > 0){
+    while($row = $result->fetch_assoc()){
+        echo "<div style='border:1px solid #ccc; padding:10px; margin:10px;'>";
+
+        echo "<p><b>Problem:</b> ".$row['problem']."</p>";
+        echo "<p><b>Location:</b> ".$row['location']."</p>";
+
+        echo "<p style='color:green;'>Accepted ✅</p>";
+
+        echo "</div>";
+    }
+} else {
+    echo "No accepted requests";
+}
+?>
+</div>
+        <?php
+include "backend/db.php";
+
+// get all pending requests
+$result = $conn->query("SELECT * FROM requests 
+WHERE status='pending' AND mechanic_id = ".$_SESSION['user_id']."");
+
+if($result->num_rows > 0){
+    while($row = $result->fetch_assoc()){
+        echo "<div style='border:1px solid #ccc; padding:10px; margin:10px 0;'>";
+
+        echo "<p><b>Problem:</b> ".$row['problem']."</p>";
+        echo "<p><b>Location:</b> ".$row['location']."</p>";
+
+        // accept button
+        echo "<form action='backend/update_status.php' method='POST' style='display:inline;'>
+                <input type='hidden' name='request_id' value='".$row['id']."'>
+                <input type='hidden' name='status' value='accepted'>
+                <button class='accept'>Accept</button>
+              </form>";
+
+        // reject button
+        echo "<form action='backend/update_status.php' method='POST' style='display:inline;'>
+                <input type='hidden' name='request_id' value='".$row['id']."'>
+                <input type='hidden' name='status' value='rejected'>
+                <button class='reject'>Reject</button>
+              </form>";
+
+        echo "</div>";
+    }
+} else {
+    echo "<p>No requests yet</p>";
+}
+?>
     </div>
+    <div class="card">
+    <h3>Repair History</h3>
 
-    <!-- Complaint System -->
+<?php
+$result = $conn->query("SELECT * FROM requests 
+WHERE mechanic_id='$mid' AND status='completed'");
+
+if($result->num_rows > 0){
+    while($row = $result->fetch_assoc()){
+        echo "<div style='border:1px solid #ccc; padding:10px; margin:10px;'>";
+
+        echo "<p><b>Problem:</b> ".$row['problem']."</p>";
+        echo "<p>Rating: ⭐ ".$row['rating']."</p>";
+
+        echo "</div>";
+    }
+} else {
+    echo "No completed work yet";
+}
+?>
+</div>
+
+    <!-- Complaint -->
     <div class="card">
         <h3>Raise Complaint</h3>
 
@@ -109,7 +191,7 @@ if(!isset($_SESSION['name'])){
             <textarea name="complaint" required></textarea><br><br>
 
             <label>Upload Image:</label><br>
-            <input type="file" name="image" accept="image/*" required><br><br>
+            <input type="file" name="image" required><br><br>
 
             <button type="submit">Submit Complaint</button>
         </form>
@@ -117,20 +199,7 @@ if(!isset($_SESSION['name'])){
 
 </div>
 
-<script>
-let online = false;
-
-function toggleStatus() {
-    online = !online;
-
-    document.getElementById("status").innerText = online 
-        ? "Currently Online" 
-        : "Currently Offline";
-}
-</script>
-...
-</div> <!-- container ends -->
-
+<!-- 🔥 FIXED TOGGLE SCRIPT -->
 <script>
 let online = false;
 
@@ -138,7 +207,7 @@ function toggleStatus() {
     online = !online;
 
     let statusText = document.getElementById("status");
-    let button = document.querySelector(".toggle");
+    let button = document.getElementById("toggleBtn");
 
     if (online) {
         statusText.innerText = "Currently Online";
@@ -151,10 +220,6 @@ function toggleStatus() {
     }
 }
 </script>
-<?php print_r($_SESSION); ?>
-
-</body>
-</html>
 
 </body>
 </html>
