@@ -1,0 +1,10 @@
+/* common.css */
+body {
+    margin: 0;
+    font-family: Arial;
+}
+
+button {
+    cursor: pointer;
+    border-radius: 5px;
+}

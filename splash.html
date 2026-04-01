@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>FixedFinder</title>
+    <link rel="stylesheet" href="css/splash.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- 🔥 Loader -->
+        <div class="loader"></div>
+
+        <!-- App Name -->
+        <h1>FixedFinder</h1>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress"></div>
+        </div>
+
+    </div>
+
+    <script>
+        setTimeout(() => {
+            document.body.classList.add("exit");
+
+            setTimeout(() => {
+                window.location.href = "login.html";
+            }, 800);
+
+        }, 3000);
+    </script>
+
+</body>
+</html>

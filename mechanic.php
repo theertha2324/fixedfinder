@@ -11,7 +11,8 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'mechanic'){
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/dashboard.css">
     <title>Mechanic Dashboard</title>
 
     <style>
