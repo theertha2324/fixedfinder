@@ -1,62 +1,166 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <link rel="stylesheet" href="css/style.css">
-    <title>Forgot Password - Fixed Finder</title>
+    <title>Forgot Password - FixedFinder</title>
+
+    <link rel="stylesheet" href="css/forgot.css">
+
+    <!-- Font Awesome (Eye icon) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
 
-<h2>Forgot Password</h2>
+<div class="container">
 
-<input type="text" id="phone" placeholder="Enter Phone"><br><br>
+    <div class="box">
 
-<button onclick="sendOTP()">Send OTP</button><br><br>
+        <h2>Reset Password</h2>
 
-<input type="text" id="otp" placeholder="Enter OTP"><br><br>
+        <!-- MESSAGE -->
+        <p id="msg"></p>
 
-<input type="password" id="newpass" placeholder="New Password"><br><br>
+        <!-- STEP 1 -->
+        <input type="text" id="email" placeholder="Email or Phone">
 
-<button onclick="resetPassword()">Reset Password</button>
+        <button onclick="sendOTP()">Send OTP</button>
+
+        <!-- STEP 2 -->
+        <input type="text" id="otp" placeholder="Enter OTP">
+
+        <button onclick="verifyOTP()">Verify OTP</button>
+
+        <!-- STEP 3 -->
+        <div id="resetBox" style="display:none; width:100%;">
+
+            <div class="password-box">
+    <input type="password" id="newPassword" placeholder="New Password">
+
+    <span class="toggle-eye" onclick="togglePassword()">
+        <i class="fa fa-eye"></i>
+    </span>
+</div>
+
+            <button onclick="resetPassword()">Update Password</button>
+
+        </div>
+
+        <!-- BACK LINK -->
+        <p class="back-link">
+            <a href="login.html">Back to Login</a>
+        </p>
+
+    </div>
+
+</div>
 
 <script>
 let generatedOTP = "";
 
-// Send OTP
-function sendOTP(){
-    let phone = document.getElementById("phone").value;
+/* VALIDATION */
+function isValidInput(input){
+    let emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/;
+    let phonePattern = /^[0-9]{10}$/;
 
-    if(phone === ""){
-        alert("Enter phone number!");
+    return emailPattern.test(input) || phonePattern.test(input);
+}
+
+/* SEND OTP */
+function sendOTP(){
+
+    let userInput = document.getElementById("email").value;
+
+    if(userInput.trim() === ""){
+        alert("Enter Email or Phone !");
         return;
     }
 
-    generatedOTP = Math.floor(1000 + Math.random() * 9000);
-    alert("Your OTP is: " + generatedOTP);
+    if(!isValidInput(userInput)){
+        alert("Invalid Email or Phone !");
+        return;
+    }
+
+    fetch("backend/check_user.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "user=" + userInput
+    })
+    .then(res => res.text())
+    .then(data => {
+
+        if(data === "not_found"){
+            document.getElementById("msg").innerText = "User not found !";
+            return;
+        }
+
+        generatedOTP = Math.floor(1000 + Math.random() * 9000);
+
+        alert("OTP: " + generatedOTP);
+        document.getElementById("msg").innerText = "OTP sent successfully ";
+    });
 }
 
-// Reset Password
-function resetPassword(){
-    let phone = document.getElementById("phone").value;
-    let userOTP = document.getElementById("otp").value;
-    let newpass = document.getElementById("newpass").value;
+/* VERIFY OTP */
+function verifyOTP(){
 
-    if(userOTP != generatedOTP){
-        alert("Invalid OTP ❌");
+    let userOTP = document.getElementById("otp").value;
+
+    if(userOTP.trim() === ""){
+        alert("Enter OTP !");
+        return;
+    }
+
+    if(userOTP == generatedOTP){
+        alert("OTP Verified ");
+
+        document.getElementById("resetBox").style.display = "block";
+
+    } else {
+        alert("Wrong OTP ");
+    }
+}
+
+/* SHOW / HIDE PASSWORD */
+function togglePassword(){
+
+    let pass = document.getElementById("newPassword");
+    let icon = document.querySelector(".toggle-eye i");
+
+    if(pass.type === "password"){
+        pass.type = "text";
+
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+
+    } else {
+        pass.type = "password";
+
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    }
+}
+
+/* RESET PASSWORD */
+function resetPassword(){
+
+    let userInput = document.getElementById("email").value;
+    let newPassword = document.getElementById("newPassword").value;
+
+    if(newPassword.trim() === ""){
+        alert("Enter new password ⚠️");
         return;
     }
 
     fetch("backend/reset_password.php", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: "phone=" + phone + "&password=" + newpass
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "user="+userInput+"&password="+newPassword
     })
     .then(res => res.text())
     .then(data => {
         alert(data);
-        window.location.href = "login.html";
+        window.location = "login.html";
     });
 }
 </script>

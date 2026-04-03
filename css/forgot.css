@@ -1,0 +1,165 @@
+/* RESET */
+* {
+    box-sizing: border-box;
+}
+
+/* BODY */
+body {
+    margin: 0;
+    font-family: Arial;
+    background: url("../images/bg3.jpg") no-repeat center center/cover;
+}
+
+/* DARK OVERLAY */
+body::before {
+    content: "";
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: -1;
+}
+
+/* CENTER */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* BOX */
+.box {
+    width: 350px;
+    padding: 30px;
+    border-radius: 20px;
+
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(15px);
+
+    color: white;
+    text-align: center;
+
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+/* INPUT */
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+
+    border: none;
+    border-radius: 25px;
+
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+/* BUTTON */
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+
+    border: none;
+    border-radius: 25px;
+
+    background: white;
+    cursor: pointer;
+}
+
+/* PASSWORD BOX */
+.password-box {
+    position: relative;
+    width: 100%;
+}
+
+.password-box input {
+    padding-right: 40px;
+}
+
+/* EYE ICON */
+.toggle-eye {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: white;
+}
+
+/* BACK LINK */
+.back-link {
+    width: 100%;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.back-link a {
+    color: white;
+    text-decoration: none;
+    opacity: 0.8;
+}
+
+.back-link a:hover {
+    opacity: 1;
+}
+
+/* HIDDEN */
+.hidden {
+    display: none;
+}
+
+/* SHOW */
+.show {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}
+
+/* ANIMATION */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.password-box {
+    position: relative;
+    width: 100%;
+}
+
+.password-box input {
+    width: 100%;
+    padding: 12px 45px 12px 15px;
+    border-radius: 25px;
+    border: none;
+    outline: none;
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+/* EYE ICON */
+.toggle-eye {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 16px;
+    color: white;
+    opacity: 0.8;
+}
+
+.toggle-eye:hover {
+    opacity: 1;
+}
+.toggle-eye i {
+    transition: 0.2s;
+}

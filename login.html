@@ -1,43 +1,92 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="css/common.css">
-<link rel="stylesheet" href="css/login.css">
-<title>Login</title>
-</head>
+    <meta charset="UTF-8">
+    <title>Login - FixedFinder</title>
 
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
 
 <body>
 
-<h2>Select Login Type</h2>
+<div class="container">
 
-<!-- Buttons -->
-<button type="button" onclick="setRole('user')">User Login</button>
-<button type="button" onclick="setRole('mechanic')">Mechanic Login</button>
-<button type="button" onclick="setRole('admin')">Admin Login</button>
+    <div class="login-box">
 
-<br><br>
+        <h2>Login</h2>
 
-<!-- LOGIN FORM -->
-<form action="backend/login.php" method="POST">
+        <!-- Role Buttons -->
+        <div class="roles">
+            <button class="role-btn" onclick="setType('user', this)">User</button>
+            <button class="role-btn" onclick="setType('mechanic', this)">Mechanic</button>
+            <button class="role-btn" onclick="setType('admin', this)">Admin</button>
+        </div>
 
-    <!-- ✅ changed name to role -->
-    <input type="hidden" name="role" id="role">
+        <!-- FORM -->
+        <form action="backend/login.php" method="POST">
 
-    <input type="text" name="email" placeholder="Email or Phone" required><br><br>
+            <input type="hidden" name="type" id="type">
 
-    <input type="password" name="password" placeholder="Password" required><br><br>
+            <div class="input-box">
+                <input type="text" name="email" required>
+                <label>Email or Phone</label>
+            </div>
 
-    <button type="submit">Login</button>
+            <div class="password-box">
+    <input type="password" name="password" id="password" placeholder="Password" required>
 
-</form>
+    <span class="toggle-eye" onclick="togglePassword()">
+        <i class="fa fa-eye"></i>
+    </span>
+</div>
 
-<a href="signup.html">Create Account</a><br>
-<a href="forgot.html">Forgot Password?</a>
+            <button class="login-btn">Login</button>
+
+        </form>
+
+        <p class="links">
+            <a href="signup.html">Create Account</a> |
+            <a href="forgot.html">Forgot?</a>
+        </p>
+
+    </div>
+
+</div>
 
 <script>
-function setRole(userRole){
-    document.getElementById("role").value = userRole;
+function setType(type, btn){
+
+    // set hidden input
+    document.getElementById("type").value = type;
+
+    // remove active from all
+    let buttons = document.querySelectorAll(".role-btn");
+    buttons.forEach(b => b.classList.remove("active"));
+
+    // add active to clicked
+    btn.classList.add("active");
+}
+
+// default select USER
+window.onload = function(){
+    document.querySelector(".role-btn").click();
+}
+</script>
+<script>
+function togglePassword(){
+    let pass = document.getElementById("password");
+    let icon = document.querySelector(".toggle-eye i");
+
+    if(pass.type === "password"){
+        pass.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    } else {
+        pass.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    }
 }
 </script>
 

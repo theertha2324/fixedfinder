@@ -1,13 +1,236 @@
-body {
-    background: linear-gradient(135deg, #1f1c2c, #928dab);
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
+/* BODY BACKGROUND */
+body {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Segoe UI', sans-serif;
+
+    background: url('../images/bg.jpg') no-repeat center center/cover;
+}
+
+/* DARK OVERLAY */
+body::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+}
+
+/* CENTER */
+.container {
+    position: relative;
+}
+
+/* GLASS BOX */
 .login-box {
-    width: 300px;
-    margin: auto;
-    margin-top: 100px;
-    padding: 20px;
-    background: white;
-    border-radius: 10px;
+    width: 350px;
+    padding: 30px;
+    border-radius: 15px;
+
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(15px);
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+
     text-align: center;
+    color: white;
+}
+
+/* TITLE */
+.login-box h2 {
+    margin-bottom: 20px;
+}
+
+/* ROLE BUTTONS */
+.roles {
+    margin-bottom: 15px;
+}
+
+.roles button {
+    margin: 5px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    
+}
+
+.roles button:hover {
+    background: white;
+    color: black;
+}
+
+/* INPUT BOX */
+.input-box {
+    position: relative;
+    margin: 20px 0;
+}
+
+.input-box input {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    outline: none;
+    border-radius: 25px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+/* LABEL */
+.input-box label {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #ddd;
+    transition: 0.3s;
+}
+
+/* FLOAT EFFECT */
+.input-box input:focus + label,
+.input-box input:valid + label {
+    top: -8px;
+    font-size: 12px;
+}
+
+/* LOGIN BUTTON */
+.login-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 25px;
+    background: white;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.login-btn:hover {
+    background: #ddd;
+}
+
+/* LINKS */
+.links {
+    margin-top: 15px;
+}
+
+.links a {
+    color: #ddd;
+    text-decoration: none;
+}
+
+.links a:hover {
+    text-decoration: underline;
+}
+/* ACTIVE ROLE BUTTON */
+.role-btn.active {
+    background: white !important;
+    color: black !important;
+    font-weight: bold;
+    transform: scale(1.05);
+}
+/* FIX RESET BOX */
+.hidden {
+    display: none;
+}
+
+.show {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}
+
+/* Smooth animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.box {
+    width: 320px;
+    padding: 30px;
+    border-radius: 20px;
+
+    /* 🔥 stronger glass */
+    background: rgba(255, 255, 255, 0.15);
+
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    /* 🔥 glass border */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+
+    /* 🔥 soft shadow */
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+
+    color: white;
+    text-align: center;
+}
+.box::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    border-radius: 20px;
+
+    background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.2),
+        rgba(255,255,255,0.05)
+    );
+
+    pointer-events: none;
+}
+.box {
+    position: relative; /* needed for overlay */
+}
+.password-box {
+    position: relative;
+    width: 100%;
+}
+
+.password-box input {
+    width: 100%;
+    padding: 12px 45px 12px 15px; /* space for eye */
+    border-radius: 25px;
+    border: none;
+    outline: none;
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+/* EYE ICON */
+.toggle-eye {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 16px;
+    color: white;
+    opacity: 0.8;
+}
+
+.toggle-eye:hover {
+    opacity: 1;
 }

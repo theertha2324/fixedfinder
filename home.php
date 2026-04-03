@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// protect page
+// 🔐 PROTECT PAGE
 if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
     header("Location: login.html");
     exit();
@@ -11,9 +11,15 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
 <!DOCTYPE html>
 <html>
 <head>
+    <title>User Dashboard - FixedFinder</title>
+
+    <!-- CSS -->
     <link rel="stylesheet" href="css/common.css">
-<link rel="stylesheet" href="css/dashboard.css">
-    <title>User Dashboard</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
     <style>
         body {
@@ -22,14 +28,26 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
         }
 
         header {
-            background: #333;
+            background: #222;
             color: white;
             padding: 15px;
             text-align: center;
+            position: relative;
+        }
+
+        .logout {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            background: red;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
         }
 
         .container {
-            width: 80%;
+            width: 85%;
             margin: auto;
             padding: 20px;
         }
@@ -39,7 +57,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
             padding: 15px;
             margin-top: 20px;
             border-radius: 10px;
-            box-shadow: 0px 0px 10px gray;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
         }
 
         button {
@@ -48,43 +66,42 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
             background: green;
             color: white;
             cursor: pointer;
-        }
-
-        .logout {
-            float: right;
-            background: red;
+            border-radius: 5px;
         }
 
         #map {
             height: 300px;
             margin-top: 10px;
+            border-radius: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 80px;
+            padding: 10px;
         }
     </style>
-
-    <!-- Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 </head>
 
 <body>
 
 <header>
-    <h2>👤 User Dashboard</h2>
+    <h2>👤 FixedFinder Dashboard</h2>
     <a href="logout.php"><button class="logout">Logout</button></a>
 </header>
 
 <div class="container">
 
-    <!-- Profile -->
+    <!-- PROFILE -->
     <div class="card">
         <h3>Welcome, <?php echo $_SESSION['name']; ?> 👋</h3>
         <p><b>Phone:</b> <?php echo $_SESSION['phone']; ?></p>
+        <p><b>User ID:</b> <?php echo $_SESSION['user_key']; ?> 🔑</p>
     </div>
 
-    <!-- Map -->
+    <!-- MAP -->
     <div class="card">
-        <h3>Find Nearby Mechanics</h3>
+        <h3>📍 Find Nearby Mechanics</h3>
 
         <div id="map"></div>
 
@@ -97,9 +114,9 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
         <div id="mechanicsList"></div>
     </div>
 
-    <!-- Requests -->
+    <!-- REQUESTS -->
     <div class="card">
-        <h3>Your Requests</h3>
+        <h3>📦 Your Requests</h3>
 
         <?php
         include "backend/db.php";
@@ -132,14 +149,14 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
                 echo "</div>";
             }
         } else {
-            echo "No requests yet";
+            echo "<p>No requests yet</p>";
         }
         ?>
     </div>
 
-    <!-- Complaint -->
+    <!-- COMPLAINT -->
     <div class="card">
-        <h3>Raise Complaint</h3>
+        <h3>⚠️ Raise Complaint</h3>
 
         <form action="backend/complaint.php" method="POST" enctype="multipart/form-data">
             <textarea name="complaint" placeholder="Enter your complaint" required></textarea><br><br>
@@ -150,7 +167,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
 
 </div>
 
-<!-- 🔥 MAP SCRIPT -->
+<!-- ================= MAP ================= -->
 <script>
 let map = L.map('map').setView([12.9716, 77.5946], 13);
 let marker;
@@ -175,7 +192,7 @@ map.on('click', function(e){
 });
 </script>
 
-<!-- 🔥 FIND MECHANICS WITH MARKERS -->
+<!-- ================= FIND MECHANICS ================= -->
 <script>
 let mechanicMarkers = [];
 
@@ -189,7 +206,6 @@ function findMechanics(){
         return;
     }
 
-    // center map
     map.setView([lat, lng], 13);
 
     fetch("backend/get_mechanics.php", {
@@ -202,7 +218,6 @@ function findMechanics(){
 
         let html = "";
 
-        // remove old markers
         mechanicMarkers.forEach(m => map.removeLayer(m));
         mechanicMarkers = [];
 
@@ -211,9 +226,8 @@ function findMechanics(){
         } else {
             data.forEach(m => {
 
-                // 🔥 ADD MARKER
                 let marker = L.marker([m.latitude, m.longitude]).addTo(map)
-                    .bindPopup(`<b>${m.name}</b><br>${m.distance} km away`);
+                    .bindPopup(`<b>${m.name}</b><br>${m.distance} km`);
 
                 mechanicMarkers.push(marker);
 

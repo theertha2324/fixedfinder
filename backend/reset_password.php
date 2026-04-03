@@ -1,29 +1,30 @@
 <?php
 include 'db.php';
 
-$phone = $_POST['phone'];
-$newpass = $_POST['password'];
+$user = $_POST['user'] ?? '';
+$newpass = $_POST['password'] ?? '';
 
-// Debug check (IMPORTANT)
-if(empty($phone) || empty($newpass)){
+if(empty($user) || empty($newpass)){
     echo "Missing data!";
     exit();
 }
 
-// Update password
-$sql = "UPDATE users SET password='$newpass' WHERE phone='$phone'";
+// Update using email OR phone
+$stmt = $conn->prepare("UPDATE users SET password=? WHERE email=? OR phone=?");
+$stmt->bind_param("sss", $newpass, $user, $user);
 
-if ($conn->query($sql) === TRUE) {
+if ($stmt->execute()) {
 
-    if($conn->affected_rows > 0){
+    if ($stmt->affected_rows > 0){
         echo "Password Updated Successfully ✅";
     } else {
         echo "User not found!";
     }
 
 } else {
-    echo "Error: " . $conn->error;
+    echo "Error updating password!";
 }
 
+$stmt->close();
 $conn->close();
 ?>
