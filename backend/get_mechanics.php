@@ -4,7 +4,10 @@ include "db.php";
 $user_lat = $_POST['lat'];
 $user_lng = $_POST['lng'];
 
-$sql = "SELECT id, name, latitude, longitude FROM users WHERE role='mechanic'";
+$sql = "SELECT * FROM users 
+        WHERE role='mechanic' 
+        AND status='online'
+        AND latitude IS NOT NULL";
 $result = $conn->query($sql);
 
 $mechanics = [];

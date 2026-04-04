@@ -2,14 +2,18 @@
 include 'db.php';
 
 $user = $_POST['user'] ?? '';
-$newpass = $_POST['password'] ?? '';
+$password = $_POST['password'] ?? '';
 
-if(empty($user) || empty($newpass)){
+// ✅ VALIDATION FIRST
+if(empty($user) || empty($password)){
     echo "Missing data!";
     exit();
 }
 
-// Update using email OR phone
+// ✅ HASH AFTER VALIDATION
+$newpass = password_hash($password, PASSWORD_DEFAULT);
+
+// ✅ PREPARED STATEMENT
 $stmt = $conn->prepare("UPDATE users SET password=? WHERE email=? OR phone=?");
 $stmt->bind_param("sss", $newpass, $user, $user);
 

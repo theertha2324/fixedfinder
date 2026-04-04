@@ -1,72 +1,55 @@
 <?php
 session_start();
 
-// protect page
+// 🔐 PROTECT PAGE
 if(!isset($_SESSION['role']) || $_SESSION['role'] != 'mechanic'){
     header("Location: login.html");
     exit();
 }
+
+include "backend/db.php";
+
+// 🔥 GET MECHANIC LOCATION
+$mid = $_SESSION['user_id'];
+$res = $conn->query("SELECT latitude, longitude FROM users WHERE id='$mid'");
+$userData = $res->fetch_assoc();
+
+$mechLat = $userData['latitude'] ?? 0;
+$mechLng = $userData['longitude'] ?? 0;
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
+    <title>Mechanic Dashboard - FixedFinder</title>
+
+    <!-- ✅ GLASS CSS -->
     <link rel="stylesheet" href="css/common.css">
-<link rel="stylesheet" href="css/dashboard.css">
-    <title>Mechanic Dashboard</title>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
     <style>
-        body {
-            font-family: Arial;
-            background: #f4f4f4;
-            margin: 0;
-        }
-
-        header {
-            background: #333;
-            color: white;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .container {
-            width: 80%;
-            margin: auto;
-            padding: 20px;
-        }
-
-        .card {
-            background: white;
-            padding: 15px;
-            margin-top: 20px;
+        .request-card {
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 12px;
+            margin-top: 12px;
             border-radius: 10px;
-            box-shadow: 0px 0px 10px gray;
         }
 
-        button {
-            padding: 8px 15px;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
+        .accept { background: rgba(0,255,0,0.4); }
+        .reject { background: rgba(255,0,0,0.4); }
 
-        .accept { background: green; color: white; }
-        .reject { background: red; color: white; }
+        .toggle-online { background: rgba(0,200,0,0.5); }
+        .toggle-offline { background: rgba(255,0,0,0.5); }
 
-        .toggle {
-            background: blue;
-            color: white;
-        }
+        .call-btn { background: rgba(0,150,255,0.6); }
 
-        textarea {
-            width: 100%;
-            height: 80px;
-        }
-
-        .logout {
-            float: right;
-            background: red;
-            color: white;
+        #map {
+            height: 220px;
+            border-radius: 10px;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -80,145 +63,162 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'mechanic'){
 
 <div class="container">
 
-    <!-- Profile -->
+    <!-- PROFILE -->
     <div class="card">
-        <h3>Profile</h3>
+        <h3>👤 Profile</h3>
         <p><b>Name:</b> <?php echo $_SESSION['name']; ?></p>
         <p><b>Phone:</b> <?php echo $_SESSION['phone']; ?></p>
-        <p><b>Location:</b> <?php echo $_SESSION['location']; ?></p>
     </div>
 
-    <!-- Status -->
+    <!-- STATUS -->
     <div class="card">
-        <h3>Status</h3>
-        <button id="toggleBtn" class="toggle" onclick="toggleStatus()">Go Online</button>
-        <p id="status">Currently Offline</p>
+        <h3>📡 Availability</h3>
+        <button id="toggleBtn" class="toggle-online" onclick="toggleStatus()">Go Online</button>
+        <p id="status">Currently Offline 🔴</p>
     </div>
 
-    <!-- Requests -->
+    <!-- PENDING -->
     <div class="card">
-        <h3>Incoming Requests</h3>
-        <div class="card">
-    <h3>Accepted Requests</h3>
+        <h3>📥 Incoming Requests</h3>
 
-<?php
-include "backend/db.php";
-
-$mid = $_SESSION['user_id'];
-
-$result = $conn->query("SELECT * FROM requests 
-WHERE mechanic_id='$mid' AND status='accepted'");
-
-if($result->num_rows > 0){
-    while($row = $result->fetch_assoc()){
-        echo "<div style='border:1px solid #ccc; padding:10px; margin:10px;'>";
-
-        echo "<p><b>Problem:</b> ".$row['problem']."</p>";
-        echo "<p><b>Location:</b> ".$row['location']."</p>";
-
-        echo "<p style='color:green;'>Accepted ✅</p>";
-
-        echo "</div>";
-    }
-} else {
-    echo "No accepted requests";
-}
-?>
-</div>
         <?php
-include "backend/db.php";
+        $result = $conn->query("SELECT * FROM requests 
+        WHERE status='pending' AND mechanic_id='$mid'");
 
-// get all pending requests
-$result = $conn->query("SELECT * FROM requests 
-WHERE status='pending' AND mechanic_id = ".$_SESSION['user_id']."");
+        if($result->num_rows > 0){
+            while($row = $result->fetch_assoc()){
 
-if($result->num_rows > 0){
-    while($row = $result->fetch_assoc()){
-        echo "<div style='border:1px solid #ccc; padding:10px; margin:10px 0;'>";
+                echo "<div class='request-card'>";
 
-        echo "<p><b>Problem:</b> ".$row['problem']."</p>";
-        echo "<p><b>Location:</b> ".$row['location']."</p>";
+                echo "<p><b>Problem:</b> ".$row['problem']."</p>";
+                echo "<p>📍 Location: Puttur</p>";
 
-        // accept button
-        echo "<form action='backend/update_status.php' method='POST' style='display:inline;'>
-                <input type='hidden' name='request_id' value='".$row['id']."'>
-                <input type='hidden' name='status' value='accepted'>
-                <button class='accept'>Accept</button>
-              </form>";
+                echo "<form action='backend/update_status.php' method='POST'>
+                        <input type='hidden' name='request_id' value='".$row['id']."'>
+                        <input type='hidden' name='status' value='accepted'>
+                        <button class='accept'>Accept</button>
+                      </form>";
 
-        // reject button
-        echo "<form action='backend/update_status.php' method='POST' style='display:inline;'>
-                <input type='hidden' name='request_id' value='".$row['id']."'>
-                <input type='hidden' name='status' value='rejected'>
-                <button class='reject'>Reject</button>
-              </form>";
+                echo "<form action='backend/update_status.php' method='POST'>
+                        <input type='hidden' name='request_id' value='".$row['id']."'>
+                        <input type='hidden' name='status' value='rejected'>
+                        <button class='reject'>Reject</button>
+                      </form>";
 
-        echo "</div>";
-    }
-} else {
-    echo "<p>No requests yet</p>";
-}
-?>
+                echo "</div>";
+            }
+        } else {
+            echo "<p>No pending requests</p>";
+        }
+        ?>
     </div>
+
+    <!-- ACCEPTED -->
     <div class="card">
-    <h3>Repair History</h3>
+        <h3>✅ Accepted Requests</h3>
 
-<?php
-$result = $conn->query("SELECT * FROM requests 
-WHERE mechanic_id='$mid' AND status='completed'");
+        <?php
+        $result = $conn->query("SELECT * FROM requests 
+        WHERE mechanic_id='$mid' AND status='accepted'");
 
-if($result->num_rows > 0){
-    while($row = $result->fetch_assoc()){
-        echo "<div style='border:1px solid #ccc; padding:10px; margin:10px;'>";
+        if($result->num_rows > 0){
+            while($row = $result->fetch_assoc()){
 
-        echo "<p><b>Problem:</b> ".$row['problem']."</p>";
-        echo "<p>Rating: ⭐ ".$row['rating']."</p>";
+                list($userLat, $userLng) = explode(",", $row['location']);
 
-        echo "</div>";
-    }
-} else {
-    echo "No completed work yet";
-}
-?>
-</div>
+                echo "<div class='request-card'>";
 
-    <!-- Complaint -->
+                echo "<p><b>Problem:</b> ".$row['problem']."</p>";
+                echo "<p>📍 Location: Puttur</p>";
+                echo "<p><b>📞 User:</b> ".$row['user_phone']."</p>";
+
+                echo "<a href='tel:".$row['user_phone']."'>
+                        <button class='call-btn'>Call User</button>
+                      </a>";
+
+                echo "<p style='color:lightgreen;'>Accepted ✔</p>";
+
+                echo "<div id='map".$row['id']."'></div>";
+
+                echo "<script>
+                setTimeout(function(){
+                    showRoute(
+                        'map".$row['id']."',
+                        $mechLat,
+                        $mechLng,
+                        $userLat,
+                        $userLng
+                    );
+                }, 300);
+                </script>";
+
+                echo "</div>";
+            }
+        } else {
+            echo "<p>No accepted requests</p>";
+        }
+        ?>
+    </div>
+
+    <!-- COMPLAINT -->
     <div class="card">
-        <h3>Raise Complaint</h3>
+        <h3>⚠️ Raise Complaint</h3>
 
         <form action="backend/complaint.php" method="POST" enctype="multipart/form-data">
-
-            <label>Complaint:</label><br>
-            <textarea name="complaint" required></textarea><br><br>
-
-            <label>Upload Image:</label><br>
-            <input type="file" name="image" required><br><br>
-
-            <button type="submit">Submit Complaint</button>
+            <textarea name="complaint" placeholder="Enter complaint..." required></textarea>
+            <input type="file" name="image">
+            <button type="submit">Submit</button>
         </form>
     </div>
 
 </div>
 
-<!-- 🔥 FIXED TOGGLE SCRIPT -->
+<!-- TOGGLE -->
 <script>
 let online = false;
 
 function toggleStatus() {
     online = !online;
+    let status = online ? "online" : "offline";
 
-    let statusText = document.getElementById("status");
-    let button = document.getElementById("toggleBtn");
+    fetch("backend/update_status.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "status=" + status
+    });
+
+    let txt = document.getElementById("status");
+    let btn = document.getElementById("toggleBtn");
 
     if (online) {
-        statusText.innerText = "Currently Online";
-        button.innerText = "Go Offline";
-        button.style.background = "red";
+        txt.innerText = "Currently Online 🟢";
+        btn.innerText = "Go Offline";
+        btn.className = "toggle-offline";
     } else {
-        statusText.innerText = "Currently Offline";
-        button.innerText = "Go Online";
-        button.style.background = "blue";
+        txt.innerText = "Currently Offline 🔴";
+        btn.innerText = "Go Online";
+        btn.className = "toggle-online";
     }
+}
+</script>
+
+<!-- MAP -->
+<script>
+function showRoute(mapId, mechLat, mechLng, userLat, userLng){
+
+    if(!mechLat || !mechLng) return;
+
+    let map = L.map(mapId).setView([mechLat, mechLng], 13);
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    L.marker([mechLat, mechLng]).addTo(map).bindPopup("You");
+    L.marker([userLat, userLng]).addTo(map).bindPopup("Customer");
+
+    L.polyline([[mechLat, mechLng],[userLat, userLng]], {
+        color: 'cyan',
+        weight: 4
+    }).addTo(map);
 }
 </script>
 
