@@ -13,31 +13,11 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
 <head>
     <title>User Dashboard - FixedFinder</title>
 
-    <!-- ✅ COMMON GLASS CSS -->
     <link rel="stylesheet" href="css/common.css">
 
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-    <style>
-        .mech-card {
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 12px;
-            margin-top: 12px;
-            border-radius: 10px;
-        }
-
-        .request-card {
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 12px;
-            margin-top: 12px;
-            border-radius: 10px;
-        }
-
-        .view-btn { background: rgba(255,165,0,0.6); }
-        .call-btn { background: rgba(0,150,255,0.6); }
-    </style>
 </head>
 
 <body>
@@ -89,7 +69,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
         if($result->num_rows > 0){
             while($row = $result->fetch_assoc()){
 
-                echo "<div class='request-card'>";
+                echo "<div class='user-card'>";
 
                 echo "<p><b>Problem:</b> ".$row['problem']."</p>";
                 echo "<p>Status: ".$row['status']."</p>";
@@ -101,8 +81,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
                             <button class='call-btn'>Call Now</button>
                           </a>";
 
-                    echo "<form action='backend/complete_request.php' method='POST'>
-                            <input type='hidden' name='request_id' value='".$row['id']."'>
+                    echo "<form onsubmit='completeRequest(event, ".$row['id'].")'>
                             <button>Mark as Repaired</button>
                           </form>";
                 }
@@ -128,12 +107,15 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
 
 </div>
 
-<!-- MAP -->
+<!-- ================= MAP ================= -->
 <script>
-let map = L.map('map').setView([12.9716, 77.5946], 13);
+let map = L.map('map').setView([12.7590, 75.2010], 13);
 let marker;
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// Fix map render
+setTimeout(() => map.invalidateSize(), 300);
 
 map.on('click', function(e){
 
@@ -153,7 +135,7 @@ map.on('click', function(e){
 });
 </script>
 
-<!-- FIND MECHANICS -->
+<!-- ================= FIND MECHANICS ================= -->
 <script>
 let mechanicMarkers = [];
 
@@ -202,11 +184,8 @@ function findMechanics(){
                         <button class="view-btn">View Profile</button>
                     </a>
 
-                    <form action="backend/send_request.php" method="POST">
-                        <input type="hidden" name="mechanic_id" value="${m.id}">
-                        <input type="hidden" name="location" value="${lat},${lng}">
+                    <form onsubmit="sendRequest(event, ${m.id}, '${lat},${lng}')">
                         <input type="text" name="problem" placeholder="Enter problem" required>
-
                         <button>Request</button>
                     </form>
                 </div>
@@ -217,6 +196,56 @@ function findMechanics(){
         document.getElementById("mechanicsList").innerHTML = html;
     });
 }
+</script>
+
+<!-- ================= AJAX FUNCTIONS ================= -->
+<script>
+// 🔥 SEND REQUEST
+function sendRequest(e, mechanicId, location){
+    e.preventDefault();
+
+    let problem = e.target.querySelector("input[name='problem']").value;
+
+    fetch("backend/send_request.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "mechanic_id="+mechanicId+"&location="+location+"&problem="+problem
+    })
+    .then(() => {
+        alert("Request Sent ✅");
+    });
+}
+
+// 🔥 COMPLETE REQUEST
+function completeRequest(e, requestId){
+    e.preventDefault();
+
+    fetch("backend/complete_request.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "request_id="+requestId
+    })
+    .then(() => {
+        alert("Marked as Completed ✅");
+        location.reload();
+    });
+}
+</script>
+
+<!-- ================= SCROLL FIX ================= -->
+<script>
+// Save scroll
+window.onbeforeunload = function() {
+    localStorage.setItem("scrollPos", window.scrollY);
+};
+
+// Restore scroll
+window.onload = function() {
+    let scroll = localStorage.getItem("scrollPos");
+    if(scroll){
+        window.scrollTo(0, scroll);
+    }
+};
 </script>
 
 </body>

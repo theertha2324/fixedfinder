@@ -11,45 +11,40 @@ $row = $res->fetch_assoc();
 <html>
 <head>
     <title>Mechanic Profile</title>
-    <style>
-        body { font-family: Arial; background:#f4f4f4; }
-        .card {
-            width: 400px;
-            margin: 50px auto;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 0 10px gray;
-        }
-        .stars {
-            color: gold;
-            font-size: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="css/common.css">
 </head>
 
 <body>
 
-<div class="card">
-    <h2>🧑‍🔧 <?php echo $row['name']; ?></h2>
+<div class="container">
 
-    <p><b>📞 Phone:</b> <?php echo $row['phone']; ?></p>
-    <p><b>🔧 Specialization:</b> <?php echo $row['specialization']; ?></p>
+    <div class="card profile-card">
 
-    <p><b>⭐ Rating:</b> 
-        <?php echo $row['rating']; ?> / 5
-    </p>
+        <h2>🧑‍🔧 <?php echo $row['name']; ?></h2>
 
-    <p class="stars">
-        <?php
-        $stars = round($row['rating']);
-        for($i=1; $i<=5; $i++){
-            echo $i <= $stars ? "⭐" : "☆";
-        }
-        ?>
-    </p>
+        <p><b>📞 Phone:</b> <?php echo $row['phone']; ?></p>
+        <p><b>🔧 Specialization:</b> <?php echo $row['specialization']; ?></p>
 
-    <p>Total Reviews: <?php echo $row['total_reviews']; ?></p>
+        <p><b>⭐ Rating:</b> <?php echo $row['rating']; ?> / 5</p>
+
+        <div class="stars">
+            <?php
+            $stars = round($row['rating']);
+            for($i=1; $i<=5; $i++){
+                echo $i <= $stars ? "⭐" : "☆";
+            }
+            ?>
+        </div>
+
+        <p>Total Reviews: <?php echo $row['total_reviews']; ?></p>
+
+        <br>
+        <a href="home.php">
+            <button>⬅ Back</button>
+        </a>
+
+    </div>
+
 </div>
 
 </body>

@@ -2,7 +2,6 @@
 session_start();
 include "backend/db.php";
 
-// 🔐 PROTECT ADMIN
 if(!isset($_SESSION['role']) || $_SESSION['role'] != 'admin'){
     header("Location: login.html");
     exit();
@@ -16,12 +15,9 @@ $search = $_GET['search'] ?? '';
 <head>
     <title>Admin Dashboard</title>
 
-    <!-- ✅ COMMON GLASS CSS -->
     <link rel="stylesheet" href="css/common.css">
 
     <style>
-        /* Only small custom tweaks (no override) */
-
         .search-box {
             display: flex;
             gap: 10px;
@@ -35,9 +31,7 @@ $search = $_GET['search'] ?? '';
             border-radius: 10px;
         }
 
-        img {
-            width: 150px;
-        }
+        img { width: 150px; }
     </style>
 </head>
 
@@ -64,6 +58,8 @@ $search = $_GET['search'] ?? '';
     <div class="card">
         <h3>👥 Manage Users & Mechanics</h3>
 
+        <div id="usersBox">
+
         <?php
         if(!empty($search)){
             $query = "SELECT * FROM users 
@@ -75,31 +71,28 @@ $search = $_GET['search'] ?? '';
 
         $result = $conn->query($query);
 
-        if($result->num_rows > 0){
-            while($row = $result->fetch_assoc()){
+        while($row = $result->fetch_assoc()){
 
-                echo "<div class='user-card'>";
+            echo "<div class='user-card' id='user".$row['id']."'>";
 
-                echo "<p><b>Name:</b> ".$row['name']."</p>";
-                echo "<p><b>User ID:</b> ".$row['user_key']."</p>";
-                echo "<p><b>Role:</b> ".$row['role']."</p>";
+            echo "<p><b>Name:</b> ".$row['name']."</p>";
+            echo "<p><b>User ID:</b> ".$row['user_key']."</p>";
+            echo "<p><b>Role:</b> ".$row['role']."</p>";
 
-                echo "<form action='backend/delete_user.php' method='POST'>
-                        <input type='hidden' name='id' value='".$row['id']."'>
-                        <button class='delete-btn'>Delete</button>
-                      </form>";
+            echo "<button class='delete-btn' onclick='deleteUser(".$row['id'].")'>Delete</button>";
 
-                echo "</div>";
-            }
-        } else {
-            echo "<p>No user found ❌</p>";
+            echo "</div>";
         }
         ?>
+
+        </div>
     </div>
 
     <!-- COMPLAINTS -->
     <div class="card">
         <h3>📩 Complaints</h3>
+
+        <div id="complaintBox">
 
         <?php
         $result = $conn->query("
@@ -109,44 +102,76 @@ $search = $_GET['search'] ?? '';
         ORDER BY c.id DESC
         ");
 
-        if($result->num_rows > 0){
-            while($row = $result->fetch_assoc()){
+        while($row = $result->fetch_assoc()){
 
-                echo "<div class='user-card'>";
+            echo "<div class='user-card' id='comp".$row['id']."'>";
 
-                echo "<p><b>Name:</b> ".$row['name']."</p>";
-                echo "<p><b>Role:</b> ".$row['role']."</p>";
-                echo "<p><b>Complaint:</b> ".$row['complaint']."</p>";
+            echo "<p><b>Name:</b> ".$row['name']."</p>";
+            echo "<p><b>Role:</b> ".$row['role']."</p>";
+            echo "<p><b>Complaint:</b> ".$row['complaint']."</p>";
 
-                if(!empty($row['image'])){
-                    echo "<img src='".$row['image']."'>";
-                }
-
-                // 🔥 REVIEW / DELETE LOGIC
-                if($row['reviewed'] == 0){
-
-                    echo "<form action='backend/update_complaint.php' method='POST'>
-                            <input type='hidden' name='id' value='".$row['id']."'>
-                            <button class='review-btn'>Review</button>
-                          </form>";
-
-                } else {
-
-                    echo "<form action='backend/delete_complaint.php' method='POST'>
-                            <input type='hidden' name='id' value='".$row['id']."'>
-                            <button class='delete-btn'>Delete</button>
-                          </form>";
-                }
-
-                echo "</div>";
+            if(!empty($row['image'])){
+                echo "<img src='".$row['image']."'>";
             }
-        } else {
-            echo "<p>No complaints yet</p>";
+
+            if($row['reviewed'] == 0){
+                echo "<button class='review-btn' onclick='reviewComplaint(".$row['id'].")'>Review</button>";
+            } else {
+                echo "<button class='delete-btn' onclick='deleteComplaint(".$row['id'].")'>Delete</button>";
+            }
+
+            echo "</div>";
         }
         ?>
+
+        </div>
     </div>
 
 </div>
+
+<!-- 🔥 JS (NO RELOAD ACTIONS) -->
+<script>
+
+// 🗑 DELETE USER
+function deleteUser(id){
+
+    fetch("backend/delete_user.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "id=" + id
+    }).then(() => {
+        document.getElementById("user"+id).remove();
+    });
+}
+
+// ✅ REVIEW COMPLAINT
+function reviewComplaint(id){
+
+    fetch("backend/update_complaint.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "id=" + id
+    }).then(() => {
+        let btn = document.querySelector("#comp"+id+" button");
+        btn.innerText = "Delete";
+        btn.className = "delete-btn";
+        btn.onclick = () => deleteComplaint(id);
+    });
+}
+
+// 🗑 DELETE COMPLAINT
+function deleteComplaint(id){
+
+    fetch("backend/delete_complaint.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "id=" + id
+    }).then(() => {
+        document.getElementById("comp"+id).remove();
+    });
+}
+
+</script>
 
 </body>
 </html>

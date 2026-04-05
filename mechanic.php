@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// 🔐 PROTECT PAGE
 if(!isset($_SESSION['role']) || $_SESSION['role'] != 'mechanic'){
     header("Location: login.html");
     exit();
@@ -9,49 +8,26 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'mechanic'){
 
 include "backend/db.php";
 
-// 🔥 GET MECHANIC LOCATION
 $mid = $_SESSION['user_id'];
-$res = $conn->query("SELECT latitude, longitude FROM users WHERE id='$mid'");
+
+$res = $conn->query("SELECT latitude, longitude, status FROM users WHERE id='$mid'");
 $userData = $res->fetch_assoc();
 
 $mechLat = $userData['latitude'] ?? 0;
 $mechLng = $userData['longitude'] ?? 0;
+$currentStatus = $userData['status'] ?? 'offline';
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Mechanic Dashboard - FixedFinder</title>
+    <title>Mechanic Dashboard</title>
 
-    <!-- ✅ GLASS CSS -->
     <link rel="stylesheet" href="css/common.css">
 
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-    <style>
-        .request-card {
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 12px;
-            margin-top: 12px;
-            border-radius: 10px;
-        }
-
-        .accept { background: rgba(0,255,0,0.4); }
-        .reject { background: rgba(255,0,0,0.4); }
-
-        .toggle-online { background: rgba(0,200,0,0.5); }
-        .toggle-offline { background: rgba(255,0,0,0.5); }
-
-        .call-btn { background: rgba(0,150,255,0.6); }
-
-        #map {
-            height: 220px;
-            border-radius: 10px;
-            margin-top: 10px;
-        }
-    </style>
 </head>
 
 <body>
@@ -73,91 +49,38 @@ $mechLng = $userData['longitude'] ?? 0;
     <!-- STATUS -->
     <div class="card">
         <h3>📡 Availability</h3>
-        <button id="toggleBtn" class="toggle-online" onclick="toggleStatus()">Go Online</button>
-        <p id="status">Currently Offline 🔴</p>
+
+        <button id="toggleBtn"
+        class="<?php echo ($currentStatus == 'online') ? 'online-btn' : 'offline-btn'; ?>"
+        onclick="toggleStatus()">
+        <?php echo ($currentStatus == 'online') ? "Go Offline" : "Go Online"; ?>
+        </button>
+
+        <p id="statusText">
+            Currently <?php echo ucfirst($currentStatus); ?>
+            <?php echo ($currentStatus == 'online') ? "🟢" : "🔴"; ?>
+        </p>
     </div>
 
     <!-- PENDING -->
     <div class="card">
         <h3>📥 Incoming Requests</h3>
-
-        <?php
-        $result = $conn->query("SELECT * FROM requests 
-        WHERE status='pending' AND mechanic_id='$mid'");
-
-        if($result->num_rows > 0){
-            while($row = $result->fetch_assoc()){
-
-                echo "<div class='request-card'>";
-
-                echo "<p><b>Problem:</b> ".$row['problem']."</p>";
-                echo "<p>📍 Location: Puttur</p>";
-
-                echo "<form action='backend/update_status.php' method='POST'>
-                        <input type='hidden' name='request_id' value='".$row['id']."'>
-                        <input type='hidden' name='status' value='accepted'>
-                        <button class='accept'>Accept</button>
-                      </form>";
-
-                echo "<form action='backend/update_status.php' method='POST'>
-                        <input type='hidden' name='request_id' value='".$row['id']."'>
-                        <input type='hidden' name='status' value='rejected'>
-                        <button class='reject'>Reject</button>
-                      </form>";
-
-                echo "</div>";
-            }
-        } else {
-            echo "<p>No pending requests</p>";
-        }
-        ?>
+        <div id="pendingBox"></div>
     </div>
 
     <!-- ACCEPTED -->
     <div class="card">
         <h3>✅ Accepted Requests</h3>
+        <div id="acceptedBox"></div>
+    </div>
 
-        <?php
-        $result = $conn->query("SELECT * FROM requests 
-        WHERE mechanic_id='$mid' AND status='accepted'");
+    <!-- HISTORY + SEARCH -->
+    <div class="card">
+        <h3>📜 Work History</h3>
 
-        if($result->num_rows > 0){
-            while($row = $result->fetch_assoc()){
+        <input type="text" id="searchInput" placeholder="Search by User ID..." oninput="filterHistory()">
 
-                list($userLat, $userLng) = explode(",", $row['location']);
-
-                echo "<div class='request-card'>";
-
-                echo "<p><b>Problem:</b> ".$row['problem']."</p>";
-                echo "<p>📍 Location: Puttur</p>";
-                echo "<p><b>📞 User:</b> ".$row['user_phone']."</p>";
-
-                echo "<a href='tel:".$row['user_phone']."'>
-                        <button class='call-btn'>Call User</button>
-                      </a>";
-
-                echo "<p style='color:lightgreen;'>Accepted ✔</p>";
-
-                echo "<div id='map".$row['id']."'></div>";
-
-                echo "<script>
-                setTimeout(function(){
-                    showRoute(
-                        'map".$row['id']."',
-                        $mechLat,
-                        $mechLng,
-                        $userLat,
-                        $userLng
-                    );
-                }, 300);
-                </script>";
-
-                echo "</div>";
-            }
-        } else {
-            echo "<p>No accepted requests</p>";
-        }
-        ?>
+        <ul id="historyBox"></ul>
     </div>
 
     <!-- COMPLAINT -->
@@ -173,53 +96,151 @@ $mechLng = $userData['longitude'] ?? 0;
 
 </div>
 
-<!-- TOGGLE -->
+<!-- 🔥 TOGGLE -->
 <script>
-let online = false;
+function toggleStatus(){
 
-function toggleStatus() {
-    online = !online;
-    let status = online ? "online" : "offline";
-
-    fetch("backend/update_status.php", {
-        method: "POST",
-        headers: {"Content-Type": "application/x-www-form-urlencoded"},
-        body: "status=" + status
-    });
-
-    let txt = document.getElementById("status");
+    let statusText = document.getElementById("statusText");
     let btn = document.getElementById("toggleBtn");
 
-    if (online) {
-        txt.innerText = "Currently Online 🟢";
-        btn.innerText = "Go Offline";
-        btn.className = "toggle-offline";
-    } else {
-        txt.innerText = "Currently Offline 🔴";
-        btn.innerText = "Go Online";
-        btn.className = "toggle-online";
-    }
+    let isOnline = statusText.innerText.includes("Online");
+    let newStatus = isOnline ? "offline" : "online";
+
+    fetch("backend/update_online_status.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "status=" + newStatus
+    }).then(() => {
+
+        if(newStatus === "online"){
+            btn.className = "online-btn";
+            btn.innerText = "Go Offline";
+            statusText.innerText = "Currently Online 🟢";
+        } else {
+            btn.className = "offline-btn";
+            btn.innerText = "Go Online";
+            statusText.innerText = "Currently Offline 🔴";
+        }
+
+    });
 }
 </script>
 
-<!-- MAP -->
+<!-- 🗺️ MAP -->
 <script>
 function showRoute(mapId, mechLat, mechLng, userLat, userLng){
 
-    if(!mechLat || !mechLng) return;
+    setTimeout(() => {
 
-    let map = L.map(mapId).setView([mechLat, mechLng], 13);
+        let map = L.map(mapId).setView([mechLat, mechLng], 13);
 
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    L.marker([mechLat, mechLng]).addTo(map).bindPopup("You");
-    L.marker([userLat, userLng]).addTo(map).bindPopup("Customer");
+        L.marker([mechLat, mechLng]).addTo(map);
+        L.marker([userLat, userLng]).addTo(map);
 
-    L.polyline([[mechLat, mechLng],[userLat, userLng]], {
-        color: 'cyan',
-        weight: 4
-    }).addTo(map);
+        L.polyline([[mechLat, mechLng],[userLat, userLng]], {
+            color: 'cyan',
+            weight: 4
+        }).addTo(map);
+
+        setTimeout(() => map.invalidateSize(), 200);
+
+    }, 300);
 }
+</script>
+
+<!-- 🔁 LIVE DATA -->
+<script>
+let fullHistory = [];
+
+function updateRequest(id, status){
+    fetch("backend/update_request_status.php", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: `request_id=${id}&status=${status}`
+    });
+}
+
+function loadData(){
+
+    fetch("backend/get_mechanic_data.php")
+    .then(res => res.json())
+    .then(data => {
+
+        fullHistory = data.history;
+
+        // PENDING
+        let pHTML = "";
+        data.pending.forEach(r => {
+            pHTML += `
+            <div class="user-card">
+                <p><b>Problem:</b> ${r.problem}</p>
+                <button onclick="updateRequest(${r.id}, 'accepted')">Accept</button>
+                <button onclick="updateRequest(${r.id}, 'rejected')">Reject</button>
+            </div>`;
+        });
+        document.getElementById("pendingBox").innerHTML = pHTML;
+
+        // ACCEPTED
+        let aHTML = "";
+        data.accepted.forEach(r => {
+            let loc = r.location.split(",");
+            aHTML += `
+            <div class="user-card">
+                <p>${r.problem}</p>
+                <p>📞 ${r.user_phone}</p>
+                <a href="tel:${r.user_phone}">
+                    <button class="call-btn">Call User</button>
+                </a>
+                <div id="map${r.id}" class="map-box"></div>
+            </div>`;
+
+            setTimeout(()=>{
+                showRoute(`map${r.id}`, <?php echo $mechLat; ?>, <?php echo $mechLng; ?>, loc[0], loc[1]);
+            }, 500);
+        });
+        document.getElementById("acceptedBox").innerHTML = aHTML;
+
+        // HISTORY
+        filterHistory();
+    });
+}
+
+// 🔍 FILTER
+function filterHistory(){
+
+    let search = document.getElementById("searchInput").value.trim().toLowerCase();
+
+    let filtered = fullHistory.filter(r => 
+        (r.user_key && r.user_key.toLowerCase().includes(search))
+    );
+
+    if(filtered.length === 0){
+        document.getElementById("historyBox").innerHTML = "<p>No results ❌</p>";
+        return;
+    }
+
+    renderHistory(filtered);
+}
+
+// 📜 RENDER
+function renderHistory(data){
+
+    let hHTML = "";
+
+    data.forEach(r => {
+        hHTML += `<li>
+            <b>${r.user_key}</b> | ${r.problem} | ${r.rating ?? 'N/A'} ⭐
+        </li>`;
+    });
+
+    document.getElementById("historyBox").innerHTML = hHTML;
+}
+
+// 🔁 AUTO REFRESH
+setInterval(loadData, 3000);
+loadData();
 </script>
 
 </body>

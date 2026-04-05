@@ -91,3 +91,105 @@ input, textarea {
     margin-top: 10px;
     border-radius: 10px;
 }
+#map {
+    height: 300px;
+    width: 100%;
+    border-radius: 10px;
+}
+/* 👤 PROFILE CARD CENTER */
+.profile-card {
+    max-width: 400px;
+    margin: 80px auto;
+    text-align: center;
+}
+
+/* ⭐ STARS */
+.stars {
+    font-size: 22px;
+    color: gold;
+    margin: 10px 0;
+}
+.map-box {
+    height: 250px;
+    width: 100%;
+    border-radius: 10px;
+    margin-top: 10px;
+    z-index: 1;
+}
+.call-btn {
+    background: rgba(0, 150, 255, 0.8);
+    color: white;
+}
+
+.call-btn:hover {
+    background: rgba(0, 150, 255, 1);
+}
+/* 🟢 ONLINE */
+.online-btn {
+    background: rgba(0, 200, 0, 0.8);
+    color: white;
+}
+
+/* 🔴 OFFLINE */
+.offline-btn {
+    background: rgba(255, 0, 0, 0.8);
+    color: white;
+}
+
+/* 🔥 HOVER EFFECT */
+.online-btn:hover {
+    background: rgba(0, 200, 0, 1);
+}
+
+.offline-btn:hover {
+    background: rgba(255, 0, 0, 1);
+}
+/* ⭐ RATING PAGE */
+.rating-card {
+    max-width: 500px;
+    margin: 80px auto;
+    text-align: center;
+}
+
+/* INPUT STYLING */
+.rating-card input {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* BIG TEXTAREA */
+.rating-card textarea {
+    width: 100%;
+    height: 120px;
+    margin-top: 10px;
+    resize: none;
+}
+/* ⭐ STAR UI */
+.star-container {
+    margin: 15px 0;
+}
+
+.star {
+    font-size: 30px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.star:hover {
+    transform: scale(1.2);
+}
+.history-card {
+    border-left: 4px solid lime;
+}
+/* 📜 HISTORY LIST */
+.history-list {
+    list-style: none;
+    padding: 0;
+}
+
+.history-list li {
+    background: rgba(255,255,255,0.1);
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 8px;
+}
