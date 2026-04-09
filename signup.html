@@ -5,26 +5,34 @@
 
     <link rel="stylesheet" href="css/signup.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+    
 </head>
 
 <body>
 
 <div class="container">
+<div class="signup-box">
 
-    <div class="signup-box">
+<h2>Create Account</h2>
 
-        <h2>Create Account</h2>
+<form action="backend/signup.php" method="POST" onsubmit="return validateForm()">
 
-        <form action="backend/signup.php" method="POST">
+<!-- NAME -->
+<input type="text" id="name" name="name" placeholder="Name" required>
+<div class="error" id="nameError"></div>
 
-            <input type="text" name="name" placeholder="Name" required>
-            <input type="text" name="phone" placeholder="Phone" required>
-            <input type="email" name="email" placeholder="Email">
-            
-            <div class="password-box">
+<!-- PHONE -->
+<input type="text" id="phone" name="phone" placeholder="Phone" maxlength="10" required>
+<div class="error" id="phoneError"></div>
+
+<!-- EMAIL -->
+<input type="email" id="email" name="email" placeholder="Email" required>
+<div class="error" id="emailError"></div>
+
+<!-- PASSWORD -->
+<div class="password-box">
     <input type="password" name="password" id="signupPassword" placeholder="Password" required>
 
     <span class="toggle-eye" onclick="toggleSignupPassword()">
@@ -32,84 +40,66 @@
     </span>
 </div>
 
-            <!-- CUSTOM DROPDOWN -->
-            <div class="custom-select">
-
-                <div class="select-box" onclick="toggleDropdown()">
-                    <span id="selected">Select Role</span>
-                </div>
-
-                <div class="options" id="dropdown">
-                    <div onclick="selectOption('user')">User</div>
-                    <div onclick="selectOption('mechanic')">Mechanic</div>
-                </div>
-
-            </div>
-
-            <input type="hidden" name="type" id="type">
-
-            <!-- Mechanic Fields -->
-            <div id="mechanicFields" style="display:none;">
-
-                <input type="text" name="garage_location" placeholder="Garage Location">
-                <input type="text" name="specialization" placeholder="Specialization">
-
-                <div id="map" style="height:300px; margin-top:10px;"></div>
-
-                <input type="hidden" name="latitude" id="lat">
-                <input type="hidden" name="longitude" id="lng">
-
-                <p class="map-text">Click on map to select location</p>
-
-            </div>
-
-            <!-- OTP -->
-            <div class="otp-box">
-                <input type="text" name="otp" id="otpInput" placeholder="Enter OTP">
-                <div class="otp-buttons">
-                    <button type="button" onclick="sendOTP()">Send OTP</button>
-                    <button type="button" onclick="verifyOTP()">Verify</button>
-                </div>
-            </div>
-
-            <button type="submit" class="signup-btn">Signup</button>
-
-        </form>
-
-        <p class="links">
-            <a href="login.html">Already have account? Login</a>
-        </p>
-
+<!-- ROLE -->
+<div class="custom-select">
+    <div class="select-box" onclick="toggleDropdown()">
+        <span id="selected">Select Role</span>
     </div>
+
+    <div class="options" id="dropdown">
+        <div onclick="selectOption('user')">User</div>
+        <div onclick="selectOption('mechanic')">Mechanic</div>
+    </div>
+</div>
+
+<input type="hidden" name="type" id="type">
+
+<!-- 🔥 MECHANIC SECTION -->
+<div id="mechanicFields" style="display:none; margin-top:15px;">
+
+    <input type="text" name="garage_location" placeholder="Garage Location">
+    <input type="text" name="specialization" placeholder="Specialization">
+
+    <div id="map" style="height:250px;"></div>
+
+    <input type="hidden" name="latitude" id="lat">
+    <input type="hidden" name="longitude" id="lng">
 
 </div>
 
-<!-- Leaflet JS -->
+<!-- OTP -->
+<input type="text" name="otp" id="otpInput" placeholder="Enter OTP" required>
+
+<button type="button" onclick="sendOTP()">Send OTP</button>
+<button type="button" onclick="verifyOTP()">Verify</button>
+
+<button type="submit">Signup</button>
+
+</form>
+
+</div>
+</div>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
 let map, marker;
 
-/* SHOW MECHANIC FIELDS + MAP */
+/* FIXED MECHANIC DISPLAY */
 function showMechanicFields(){
-
     let type = document.getElementById("type").value;
     let box = document.getElementById("mechanicFields");
 
     if(type === "mechanic"){
-
         box.style.display = "block";
 
         setTimeout(() => {
-
             if(!map){
-
-                map = L.map('map').setView([12.9716, 77.5946], 13);
+                map = L.map('map').setView([12.9716,77.5946],13);
 
                 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
                 map.on('click', function(e){
-
                     let lat = e.latlng.lat;
                     let lng = e.latlng.lng;
 
@@ -118,47 +108,16 @@ function showMechanicFields(){
 
                     if(marker) map.removeLayer(marker);
 
-                    marker = L.marker([lat, lng]).addTo(map)
-                        .bindPopup("Selected Location")
-                        .openPopup();
+                    marker = L.marker([lat,lng]).addTo(map);
                 });
-
             } else {
-                map.invalidateSize(); // 🔥 FIX
+                map.invalidateSize();
             }
-
-        }, 300);
+        },300);
 
     } else {
         box.style.display = "none";
     }
-}
-
-/* OTP DEMO */
-let generatedOTP = "";
-
-function sendOTP(){
-
-    let phone = document.querySelector("input[name='phone']").value;
-
-    if(phone.trim() === ""){
-        alert("Enter phone first !");
-        return;
-    }
-
-    fetch("backend/send_otp.php", {
-        method: "POST",
-        headers: {"Content-Type": "application/x-www-form-urlencoded"},
-        body: "phone=" + phone
-    })
-    .then(res => res.text())
-    .then(data => {
-        alert(data); // shows OTP
-    });
-}
-
-function verifyOTP(){
-    alert("OTP will be verified during signup ");
 }
 
 /* DROPDOWN */
@@ -167,43 +126,82 @@ function toggleDropdown(){
 }
 
 function selectOption(value){
-
-    document.getElementById("selected").innerText =
-        value.charAt(0).toUpperCase() + value.slice(1);
-
+    document.getElementById("selected").innerText = value;
     document.getElementById("type").value = value;
-
     document.getElementById("dropdown").classList.remove("show");
 
-    showMechanicFields(); // 🔥 IMPORTANT
+    showMechanicFields();
 }
 
-/* CLOSE DROPDOWN OUTSIDE */
-window.onclick = function(e){
-    if(!e.target.closest(".custom-select")){
-        document.getElementById("dropdown").classList.remove("show");
-    }
-}
-</script>
-<script>
+/* PASSWORD */
 function toggleSignupPassword(){
-
     let pass = document.getElementById("signupPassword");
-    let icon = document.querySelector(".password-box .toggle-eye i");
+    let icon = document.querySelector(".toggle-eye i");
 
     if(pass.type === "password"){
         pass.type = "text";
-
-        icon.classList.remove("fa-eye");
-        icon.classList.add("fa-eye-slash");
-
+        icon.classList.replace("fa-eye", "fa-eye-slash");
     } else {
         pass.type = "password";
-
-        icon.classList.remove("fa-eye-slash");
-        icon.classList.add("fa-eye");
+        icon.classList.replace("fa-eye-slash", "fa-eye");
     }
 }
+
+/* OTP */
+function sendOTP(){
+    let phone = document.getElementById("phone").value;
+
+    if(!/^[0-9]{10}$/.test(phone)){
+        alert("Enter valid phone ❌");
+        return;
+    }
+
+    fetch("backend/send_otp.php",{
+        method:"POST",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        body:"phone="+phone
+    })
+    .then(res=>res.text())
+    .then(data=>alert(data));
+}
+
+function verifyOTP(){
+    alert("OTP checked in backend");
+}
+
+/* VALIDATION */
+function validateForm(){
+
+    let name = document.getElementById("name").value.trim();
+    let phone = document.getElementById("phone").value.trim();
+    let email = document.getElementById("email").value.trim();
+    let pass = document.getElementById("signupPassword").value;
+
+    let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if(!/^[A-Za-z ]{3,}$/.test(name)){
+        alert("Invalid name");
+        return false;
+    }
+
+    if(!/^[0-9]{10}$/.test(phone)){
+        alert("Invalid phone");
+        return false;
+    }
+
+    if(!emailPattern.test(email)){
+        alert("Invalid email");
+        return false;
+    }
+
+    if(pass.length < 6){
+        alert("Password too short");
+        return false;
+    }
+
+    return true;
+}
 </script>
+
 </body>
 </html>

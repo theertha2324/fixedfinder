@@ -36,6 +36,13 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
         <p><b>User ID:</b> <?php echo $_SESSION['user_key']; ?> 🔑</p>
     </div>
 
+    <!-- TROUBLE -->
+    <div style="margin-bottom: 15px; text-align: center;">
+        <a href="trouble.php">
+            <button class="trouble-btn">⚠️ Raise Trouble</button>
+        </a>
+    </div>
+
     <!-- MAP -->
     <div class="card">
         <h3>📍 Find Nearby Mechanics</h3>
@@ -52,7 +59,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
     </div>
 
     <!-- REQUESTS -->
-    <div class="card">
+    <div class="card" id="requestCard">
         <h3>📦 Your Requests</h3>
 
         <?php
@@ -69,21 +76,41 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] != 'user'){
         if($result->num_rows > 0){
             while($row = $result->fetch_assoc()){
 
+                $status = strtolower(trim($row['status']));
+
                 echo "<div class='user-card'>";
 
                 echo "<p><b>Problem:</b> ".$row['problem']."</p>";
                 echo "<p>Status: ".$row['status']."</p>";
 
-                if($row['status'] == 'accepted'){
+                // ================= ACCEPTED =================
+                if($status === 'accepted'){
+
                     echo "<p>📞 Mechanic: ".$row['phone']."</p>";
 
                     echo "<a href='tel:".$row['phone']."'>
                             <button class='call-btn'>Call Now</button>
                           </a>";
 
-                    echo "<form onsubmit='completeRequest(event, ".$row['id'].")'>
-                            <button>Mark as Repaired</button>
-                          </form>";
+                    echo "<button onclick='completeRequest(".$row['id'].")' class='complete-btn'>
+                            Mark as Repaired
+                          </button>";
+                }
+
+                // ================= COMPLETED =================
+                if($status === 'completed'){
+
+                    echo "<button class='done-btn' disabled>
+                            ✔ Work Completed
+                          </button>";
+
+                    if(empty($row['rating'])){
+                        echo "<a href='rating.php?id=".$row['id']."'>
+                                <button>Rate ⭐</button>
+                              </a>";
+                    } else {
+                        echo "<p>⭐ Rated: ".$row['rating']." / 5</p>";
+                    }
                 }
 
                 echo "</div>";
@@ -114,9 +141,9 @@ let marker;
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-// Fix map render
-setTimeout(() => map.invalidateSize(), 300);
+setTimeout(() => map.invalidateSize(), 100);
 
+// CLICK MAP
 map.on('click', function(e){
 
     let lat = e.latlng.lat;
@@ -124,6 +151,9 @@ map.on('click', function(e){
 
     document.getElementById("lat").value = lat;
     document.getElementById("lng").value = lng;
+
+    localStorage.setItem("lat", lat);
+    localStorage.setItem("lng", lng);
 
     if(marker){
         map.removeLayer(marker);
@@ -198,9 +228,8 @@ function findMechanics(){
 }
 </script>
 
-<!-- ================= AJAX FUNCTIONS ================= -->
+<!-- ================= AJAX ================= -->
 <script>
-// 🔥 SEND REQUEST
 function sendRequest(e, mechanicId, location){
     e.preventDefault();
 
@@ -216,9 +245,7 @@ function sendRequest(e, mechanicId, location){
     });
 }
 
-// 🔥 COMPLETE REQUEST
-function completeRequest(e, requestId){
-    e.preventDefault();
+function completeRequest(requestId){
 
     fetch("backend/complete_request.php", {
         method: "POST",
@@ -226,26 +253,49 @@ function completeRequest(e, requestId){
         body: "request_id="+requestId
     })
     .then(() => {
-        alert("Marked as Completed ✅");
-        location.reload();
-    });
+    alert("Marked as Completed ✅");
+    loadRequests(); // 🔥 reload only requests
+});
 }
 </script>
 
-<!-- ================= SCROLL FIX ================= -->
+<!-- ================= RESTORE ================= -->
 <script>
-// Save scroll
-window.onbeforeunload = function() {
-    localStorage.setItem("scrollPos", window.scrollY);
-};
+window.onload = function(){
 
-// Restore scroll
-window.onload = function() {
     let scroll = localStorage.getItem("scrollPos");
     if(scroll){
         window.scrollTo(0, scroll);
     }
+
+    let lat = localStorage.getItem("lat");
+    let lng = localStorage.getItem("lng");
+
+    if(lat && lng){
+        marker = L.marker([lat, lng]).addTo(map);
+        map.setView([lat, lng], 13);
+
+        document.getElementById("lat").value = lat;
+        document.getElementById("lng").value = lng;
+    }
 };
+
+window.onbeforeunload = function() {
+    localStorage.setItem("scrollPos", window.scrollY);
+};
+</script>
+
+<!-- ================= AUTO UPDATE ================= -->
+<script>
+setInterval(loadRequests, 3000);
+
+function loadRequests(){
+    fetch("backend/get_user_requests.php")
+    .then(res => res.text())
+    .then(data => {
+        document.getElementById("requestCard").innerHTML = data;
+    });
+}
 </script>
 
 </body>

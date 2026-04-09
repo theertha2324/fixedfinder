@@ -193,3 +193,43 @@ input, textarea {
     padding: 10px;
     border-radius: 8px;
 }
+#map {
+    height: 300px;
+    width: 100%;
+}
+.trouble-btn {
+    background: linear-gradient(135deg, #ff4d4d, #ff1a1a);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.trouble-btn:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #ff1a1a, #cc0000);
+}
+.complete-btn {
+    background: orange;
+    color: black;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.complete-btn:hover {
+    background: #ff9800;
+}
+
+.done-btn {
+    background: green;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    opacity: 0.8;
+}

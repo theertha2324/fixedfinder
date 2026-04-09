@@ -76,3 +76,4 @@ VALUES ('Thejas', 'thejas@gmail.com', '6666666666', 'mech123', 'mechanic', 'Putt
 mechanic entry
 INSERT INTO mechanics (user_id, status, latitude, longitude)
 VALUES (3, 'available', 12.76, 75.20);
+

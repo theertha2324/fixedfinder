@@ -13,8 +13,6 @@ $mid = $_SESSION['user_id'];
 $res = $conn->query("SELECT latitude, longitude, status FROM users WHERE id='$mid'");
 $userData = $res->fetch_assoc();
 
-$mechLat = $userData['latitude'] ?? 0;
-$mechLng = $userData['longitude'] ?? 0;
 $currentStatus = $userData['status'] ?? 'offline';
 ?>
 
@@ -24,10 +22,6 @@ $currentStatus = $userData['status'] ?? 'offline';
     <title>Mechanic Dashboard</title>
 
     <link rel="stylesheet" href="css/common.css">
-
-    <!-- Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 
 <body>
@@ -126,30 +120,6 @@ function toggleStatus(){
 }
 </script>
 
-<!-- 🗺️ MAP -->
-<script>
-function showRoute(mapId, mechLat, mechLng, userLat, userLng){
-
-    setTimeout(() => {
-
-        let map = L.map(mapId).setView([mechLat, mechLng], 13);
-
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-        L.marker([mechLat, mechLng]).addTo(map);
-        L.marker([userLat, userLng]).addTo(map);
-
-        L.polyline([[mechLat, mechLng],[userLat, userLng]], {
-            color: 'cyan',
-            weight: 4
-        }).addTo(map);
-
-        setTimeout(() => map.invalidateSize(), 200);
-
-    }, 300);
-}
-</script>
-
 <!-- 🔁 LIVE DATA -->
 <script>
 let fullHistory = [];
@@ -182,24 +152,32 @@ function loadData(){
         });
         document.getElementById("pendingBox").innerHTML = pHTML;
 
-        // ACCEPTED
+        // ACCEPTED (🔥 UPDATED HERE)
         let aHTML = "";
         data.accepted.forEach(r => {
+
             let loc = r.location.split(",");
+            let lat = loc[0];
+            let lng = loc[1];
+
+            let gmap = `https://www.google.com/maps?q=${lat},${lng}`;
+
             aHTML += `
             <div class="user-card">
                 <p>${r.problem}</p>
                 <p>📞 ${r.user_phone}</p>
+
                 <a href="tel:${r.user_phone}">
                     <button class="call-btn">Call User</button>
                 </a>
-                <div id="map${r.id}" class="map-box"></div>
-            </div>`;
 
-            setTimeout(()=>{
-                showRoute(`map${r.id}`, <?php echo $mechLat; ?>, <?php echo $mechLng; ?>, loc[0], loc[1]);
-            }, 500);
+                <!-- ✅ GOOGLE MAP BUTTON -->
+                <a href="${gmap}" target="_blank">
+                    <button class="map-btn">View in Google Maps 📍</button>
+                </a>
+            </div>`;
         });
+
         document.getElementById("acceptedBox").innerHTML = aHTML;
 
         // HISTORY
@@ -231,15 +209,16 @@ function renderHistory(data){
 
     data.forEach(r => {
         hHTML += `<li>
-            <b>${r.user_key}</b> | ${r.problem} | ${r.rating ?? 'N/A'} ⭐
-        </li>`;
+    <b>${r.user_key}</b> | ${r.problem} | ⭐ ${r.rating ?? 'N/A'} 
+    <br><small>${r.feedback ?? ''}</small>
+</li>`;
     });
 
     document.getElementById("historyBox").innerHTML = hHTML;
 }
 
 // 🔁 AUTO REFRESH
-setInterval(loadData, 3000);
+setInterval(loadData, 2000);
 loadData();
 </script>
 

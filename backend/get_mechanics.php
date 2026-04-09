@@ -6,7 +6,7 @@ $user_lng = $_POST['lng'];
 
 $sql = "SELECT * FROM users 
         WHERE role='mechanic' 
-        AND status='online'
+        AND LOWER(status)='online'
         AND latitude IS NOT NULL";
 $result = $conn->query($sql);
 

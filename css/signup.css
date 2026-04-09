@@ -1,11 +1,11 @@
-/* RESET */
+/* ================= RESET ================= */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* BODY */
+/* ================= BODY ================= */
 body {
     height: 100vh;
     display: flex;
@@ -16,21 +16,22 @@ body {
     background: url('../images/bg1.jpg') no-repeat center/cover;
 }
 
-/* OVERLAY */
+/* DARK OVERLAY */
 body::before {
     content: "";
-    position: absolute;
+    position: fixed;
     width: 100%;
     height: 100%;
     background: rgba(0,0,0,0.6);
+    z-index: -1;
 }
 
-/* CONTAINER */
+/* ================= CONTAINER ================= */
 .container {
     position: relative;
 }
 
-/* BOX */
+/* ================= SIGNUP BOX ================= */
 .signup-box {
     width: 400px;
     padding: 30px;
@@ -41,90 +42,101 @@ body::before {
 
     color: white;
     text-align: center;
+
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
-/* INPUTS */
-.signup-box input,
-.signup-box select {
+/* ================= INPUTS ================= */
+.signup-box input {
     width: 100%;
-    padding: 12px;
+    padding: 12px 15px;
     margin: 10px 0;
     border: none;
     border-radius: 25px;
     background: rgba(255,255,255,0.2);
     color: white;
+    outline: none;
 }
 
-/* BUTTON */
+/* PLACEHOLDER */
+.signup-box input::placeholder {
+    color: #ddd;
+}
+
+/* ================= PASSWORD BOX ================= */
+.password-box {
+    position: relative;
+    width: 100%;
+}
+
+.password-box input {
+    padding-right: 45px;
+}
+
+/* EYE ICON */
+.toggle-eye {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #ddd;
+    font-size: 16px;
+}
+
+.toggle-eye:hover {
+    color: white;
+}
+
+/* ================= BUTTON ================= */
+button {
+    border-radius: 20px;
+    padding: 8px 15px;
+    border: none;
+    cursor: pointer;
+    background: white;
+}
+
+/* SIGNUP BUTTON */
 .signup-btn {
     width: 100%;
     padding: 12px;
-    border: none;
-    border-radius: 25px;
-    background: white;
-    color: black;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-/* MAP */
-#map {
-    height: 200px;
     margin-top: 10px;
-    border-radius: 10px;
+    font-weight: bold;
 }
 
-/* HIDE MECHANIC FIELDS */
-#mechanicFields {
-    display: none;
-}
-
-/* OTP */
+/* ================= OTP ================= */
 .otp-box {
     margin-top: 10px;
 }
 
-.otp-buttons button {
-    margin: 5px;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
+.otp-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
 }
 
-/* LINKS */
+/* ================= LINKS ================= */
 .links {
     margin-top: 10px;
 }
 
 .links a {
     color: #ddd;
-}
-/* INPUT TEXT */
-.signup-box input {
-    color: white;
+    text-decoration: none;
 }
 
-/* PLACEHOLDER TEXT */
-.signup-box input::placeholder {
-    color: #ddd;
-}
-/* SELECT TEXT */
-.signup-box select {
-    color: white;
+.links a:hover {
+    text-decoration: underline;
 }
 
-/* DROPDOWN OPTIONS (IMPORTANT) */
-.signup-box select option {
-    color: black;   /* 👈 makes dropdown readable */
-}
-/* CUSTOM DROPDOWN */
+/* ================= CUSTOM DROPDOWN ================= */
 .custom-select {
     position: relative;
     margin: 10px 0;
 }
 
-/* BOX */
 .select-box {
     padding: 12px;
     border-radius: 25px;
@@ -134,22 +146,7 @@ body::before {
     text-align: center;
 }
 
-/* DROPDOWN */
-.custom-select {
-    margin: 10px 0;
-}
-
-/* BOX */
-.select-box {
-    padding: 12px;
-    border-radius: 25px;
-    background: rgba(255,255,255,0.2);
-    color: white;
-    cursor: pointer;
-    text-align: center;
-}
-
-/* DROPDOWN */
+/* DROPDOWN OPTIONS */
 .options {
     display: none;
     margin-top: 8px;
@@ -159,13 +156,10 @@ body::before {
     backdrop-filter: blur(15px);
 
     overflow: hidden;
-
-    /* ✨ smooth animation */
     max-height: 0;
     transition: all 0.3s ease;
 }
 
-/* WHEN OPEN */
 .options.show {
     display: block;
     max-height: 200px;
@@ -182,63 +176,17 @@ body::before {
     background: rgba(255,255,255,0.3);
 }
 
-/* ITEMS */
-.options div {
-    padding: 10px;
-    color: white;
-    cursor: pointer;
+/* ================= MAP ================= */
+#map {
+    height: 220px;
+    margin-top: 10px;
+    border-radius: 10px;
 }
 
-.options div:hover {
-    background: rgba(255,255,255,0.3);
-}
-body {
-    margin: 0;
-    padding: 0;
-
-    background: url("../images/bg1.jpg") no-repeat center center/cover;
-}
-
-/* DARK OVERLAY FIX */
-body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-
-    background: rgba(0,0,0,0.5); /* adjust darkness */
-    z-index: -1;
-}
-.password-box {
-    position: relative;
-    width: 100%;
-}
-
-.password-box input {
-    width: 100%;
-    padding: 12px 45px 12px 15px; /* 🔥 space for eye */
-    border-radius: 25px;
-    border: none;
-    outline: none;
-    background: rgba(255,255,255,0.2);
-    color: white;
-}
-
-/* EYE ICON INSIDE INPUT */
-.toggle-eye {
-    position: absolute;
-    right: 15px;              /* 🔥 move inside */
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    font-size: 16px;
-    color: white;
-    opacity: 0.8;
-    z-index: 2;               /* 🔥 ensures it's above input */
-}
-
-.toggle-eye:hover {
-    opacity: 1;
+/* ================= ERRORS ================= */
+.error {
+    color: #ff6b6b;
+    font-size: 12px;
+    text-align: left;
+    margin-bottom: 5px;
 }

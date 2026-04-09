@@ -2,37 +2,52 @@
 session_start();
 include "db.php";
 
-$mid = $_SESSION['user_id'] ?? 0;
+$mid = $_SESSION['user_id'];
 
-// 🔥 PENDING (show all or nearby — keep simple)
-$pending = $conn->query("
-SELECT * FROM requests 
-WHERE status='pending'
-ORDER BY id DESC
+// ================= PENDING =================
+$pending = [];
+$res1 = $conn->query("
+    SELECT * FROM requests 
+    WHERE mechanic_id IS NULL 
+    AND status='pending'
 ");
 
-// 🔥 ACCEPTED
-$accepted = $conn->query("
-SELECT * FROM requests 
-WHERE mechanic_id='$mid' AND status='accepted'
-ORDER BY id DESC
+while($row = $res1->fetch_assoc()){
+    $pending[] = $row;
+}
+
+// ================= ACCEPTED =================
+$accepted = [];
+$res2 = $conn->query("
+    SELECT r.*, u.phone as user_phone 
+    FROM requests r
+    JOIN users u ON r.user_id = u.id
+    WHERE r.mechanic_id='$mid'
+    AND r.status='accepted'
 ");
 
-// 🔥 WORK HISTORY (VERY IMPORTANT FIX)
-$history = $conn->query("
-SELECT r.*, 
-       COALESCE(u.user_key, 'Unknown') AS user_key
-FROM requests r
-LEFT JOIN users u ON r.user_id = u.id
-WHERE r.mechanic_id='$mid' 
-AND r.status='completed'
-ORDER BY r.id DESC
+while($row = $res2->fetch_assoc()){
+    $accepted[] = $row;
+}
+
+// ================= HISTORY (🔥 FIX) =================
+$history = [];
+$res3 = $conn->query("
+    SELECT r.*, u.user_key 
+    FROM requests r
+    JOIN users u ON r.user_id = u.id
+    WHERE r.mechanic_id='$mid'
+    AND r.status='completed'
 ");
 
-// ✅ OUTPUT JSON
+while($row = $res3->fetch_assoc()){
+    $history[] = $row;
+}
+
+// ================= OUTPUT =================
 echo json_encode([
-    "pending" => $pending->fetch_all(MYSQLI_ASSOC),
-    "accepted" => $accepted->fetch_all(MYSQLI_ASSOC),
-    "history" => $history->fetch_all(MYSQLI_ASSOC)
+    "pending" => $pending,
+    "accepted" => $accepted,
+    "history" => $history
 ]);
 ?>

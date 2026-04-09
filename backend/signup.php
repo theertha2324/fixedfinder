@@ -3,83 +3,144 @@ session_start();
 include "db.php";
 
 // =======================
-// GET FORM DATA
+// GET FORM DATA SAFELY
 // =======================
-$name = $_POST['name'];
-$phone = $_POST['phone'];
-$email = $_POST['email'];
-$password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-$role = $_POST['type'];
-$user_otp = $_POST['otp'];
+$name = trim($_POST['name'] ?? '');
+$phone = trim($_POST['phone'] ?? '');
+$email = trim($_POST['email'] ?? '');
+$password_raw = $_POST['password'] ?? '';
+$role = $_POST['type'] ?? '';
+$user_otp = $_POST['otp'] ?? '';
 
-// mechanic fields (optional)
-$garage = $_POST['garage_location'] ?? '';
-$spec = $_POST['specialization'] ?? '';
+$garage = trim($_POST['garage_location'] ?? '');
+$spec = trim($_POST['specialization'] ?? '');
 $lat = $_POST['latitude'] ?? '';
 $lng = $_POST['longitude'] ?? '';
 
 
 // =======================
-// STEP 1: OTP CHECK
+// VALIDATION (STRONG)
+// =======================
+
+// NAME (only letters, no only spaces, min 3 chars)
+if(empty($name) || !preg_match("/^[A-Za-z ]+$/", $name) || strlen(str_replace(' ', '', $name)) < 3){
+    die("<script>alert('Name must contain only letters and at least 3 characters ❌'); window.history.back();</script>");
+}
+
+// PHONE (exact 10 digits)
+if(!preg_match("/^[0-9]{10}$/", $phone)){
+    die("<script>alert('Invalid Phone Number ❌'); window.history.back();</script>");
+}
+
+// EMAIL (strict validation)
+if(empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)){
+    die("<script>alert('Invalid Email Format ❌'); window.history.back();</script>");
+}
+
+// PASSWORD (min 6 chars)
+if(strlen($password_raw) < 6){
+    die("<script>alert('Password must be at least 6 characters ❌'); window.history.back();</script>");
+}
+
+// ROLE
+if(empty($role)){
+    die("<script>alert('Please select role ❌'); window.history.back();</script>");
+}
+
+
+// =======================
+// OTP CHECK
 // =======================
 if(!isset($_SESSION['otp']) || !isset($_SESSION['otp_phone'])){
-    echo "<script>alert('Please generate OTP first'); window.location='../signup.html';</script>";
-    exit();
+    die("<script>alert('Please generate OTP first ❌'); window.location='../signup.html';</script>");
 }
 
-
-// =======================
-// STEP 2: VERIFY OTP
-// =======================
+// VERIFY OTP
 if((string)$user_otp !== (string)$_SESSION['otp']){
-    echo "<script>alert('Wrong OTP'); window.location='../signup.html';</script>";
-    exit();
+    die("<script>alert('Wrong OTP ❌'); window.location='../signup.html';</script>");
+}
+
+// PHONE MATCH
+if($phone !== $_SESSION['otp_phone']){
+    die("<script>alert('Phone mismatch ❌'); window.location='../signup.html';</script>");
 }
 
 
 // =======================
-// STEP 3: PHONE MATCH
+// MECHANIC LOCATION CHECK
 // =======================
-if($phone != $_SESSION['otp_phone']){
-    echo "<script>alert('Phone number mismatch ❌'); window.location='../signup.html';</script>";
-    exit();
+if($role === "mechanic"){
+    if(empty($lat) || empty($lng)){
+        die("<script>alert('Please select location on map ❌'); window.history.back();</script>");
+    }
 }
 
 
 // =======================
-// STEP 4: CHECK DUPLICATES
+// CHECK DUPLICATES (SECURE)
 // =======================
-$check = "SELECT * FROM users WHERE phone='$phone' OR email='$email'";
-$result = $conn->query($check);
+$stmt = $conn->prepare("SELECT id FROM users WHERE phone=? OR email=?");
+$stmt->bind_param("ss", $phone, $email);
+$stmt->execute();
+$result = $stmt->get_result();
 
 if($result->num_rows > 0){
-    echo "<script>alert('Email or Phone already exists ❌'); window.location='../signup.html';</script>";
-    exit();
+    die("<script>alert('Email or Phone already exists ❌'); window.location='../signup.html';</script>");
 }
 
 
 // =======================
-// STEP 5: GENERATE USER KEY
+// GENERATE USER KEY
 // =======================
 function generateUserKey(){
-    return "FF" . strtoupper(substr(md5(uniqid()), 0, 8));
+    return "FF" . strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
 }
 
 $user_key = generateUserKey();
 
 
 // =======================
-// STEP 6: INSERT USER
+// HASH PASSWORD
 // =======================
-$sql = "INSERT INTO users 
-(name, phone, email, password, role, user_key, location, garage_location, specialization, latitude, longitude)
-VALUES 
-('$name','$phone','$email','$password','$role','$user_key','$garage','$garage','$spec','$lat','$lng')";
+$password = password_hash($password_raw, PASSWORD_DEFAULT);
 
 
-if($conn->query($sql)){
+// =======================
+// XSS PROTECTION
+// =======================
+$name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+$email = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
+$garage = htmlspecialchars($garage, ENT_QUOTES, 'UTF-8');
+$spec = htmlspecialchars($spec, ENT_QUOTES, 'UTF-8');
 
-    // clear OTP session
+
+// =======================
+// INSERT USER (SECURE)
+// =======================
+$stmt = $conn->prepare("
+    INSERT INTO users 
+    (name, phone, email, password, role, user_key, location, garage_location, specialization, latitude, longitude)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+");
+
+$stmt->bind_param(
+    "sssssssssss",
+    $name,
+    $phone,
+    $email,
+    $password,
+    $role,
+    $user_key,
+    $garage,   // keeping your logic
+    $garage,
+    $spec,
+    $lat,
+    $lng
+);
+
+if($stmt->execute()){
+
+    // CLEAR OTP SESSION
     unset($_SESSION['otp']);
     unset($_SESSION['otp_phone']);
 
@@ -89,8 +150,9 @@ if($conn->query($sql)){
     </script>";
 
 } else {
-    echo "Error: " . $conn->error;
+    echo "Error: " . $stmt->error;
 }
 
+$stmt->close();
 $conn->close();
 ?>
