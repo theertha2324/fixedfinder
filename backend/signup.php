@@ -14,8 +14,8 @@ $user_otp = $_POST['otp'] ?? '';
 
 $garage = trim($_POST['garage_location'] ?? '');
 $spec = trim($_POST['specialization'] ?? '');
-$lat = $_POST['latitude'] ?? '';
-$lng = $_POST['longitude'] ?? '';
+$lat = ($_POST['latitude'] ?? '') === '' ? 0 : $_POST['latitude'];
+$lng = ($_POST['longitude'] ?? '') === '' ? 0 : $_POST['longitude'];
 
 
 // =======================
